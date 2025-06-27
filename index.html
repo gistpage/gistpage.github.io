@@ -1046,7 +1046,7 @@
       document.getElementById('previewUrlText').style.color = '#1d4ed8';
     }
 
-    // 移除JSON中的注释
+    // 移除JSON中的注释和控制字符
     function removeJsonComments(jsonString) {
       // 移除单行注释 //
       let cleanJson = jsonString.replace(/\/\/.*$/gm, '');
@@ -1054,10 +1054,23 @@
       // 移除多行注释 /* */
       cleanJson = cleanJson.replace(/\/\*[\s\S]*?\*\//g, '');
       
-      // 移除空行和多余的空白字符
+      // 移除不可见的控制字符（保留空格、制表符、换行符）
+      cleanJson = cleanJson.replace(/[\u0000-\u001F\u007F-\u009F]/g, function(match) {
+        // 保留换行符、回车符、制表符
+        if (match === '\n' || match === '\r' || match === '\t') {
+          return match;
+        }
+        // 移除其他控制字符
+        return '';
+      });
+      
+      // 清理多余的空白行
       cleanJson = cleanJson.replace(/^\s*[\r\n]/gm, '');
       
-      return cleanJson;
+      // 修复可能的编码问题 - 移除BOM标记
+      cleanJson = cleanJson.replace(/^\uFEFF/, '');
+      
+      return cleanJson.trim();
     }
 
     // 解析 gistId 或 url
@@ -1146,11 +1159,33 @@
         
         // 解析配置数据
         try {
-          // 清理JSON中的注释（支持 // 和 /* */ 格式）
+          // 清理JSON中的注释和控制字符
           const cleanJsonText = removeJsonComments(jsonText);
+          
+          // 添加调试信息（开发模式下可见）
+          console.log('原始JSON内容:', jsonText);
+          console.log('清理后JSON内容:', cleanJsonText);
+          
           currentJson = JSON.parse(cleanJsonText);
         } catch (e) {
-          showLoginMsg(`配置数据解析失败：${e.message}`, 'error');
+          console.error('JSON解析失败详细信息:', {
+            error: e.message,
+            position: e.message.match(/position (\d+)/)?.[1],
+            originalLength: jsonText.length,
+            cleanedLength: removeJsonComments(jsonText).length
+          });
+          
+          // 尝试提供更友好的错误提示
+          let friendlyMessage = '配置数据格式错误';
+          if (e.message.includes('control character')) {
+            friendlyMessage = '配置数据包含不支持的特殊字符，请检查是否有隐藏字符或编码问题';
+          } else if (e.message.includes('Unexpected token')) {
+            friendlyMessage = '配置数据语法错误，请检查JSON格式是否正确';
+          } else if (e.message.includes('Unexpected end')) {
+            friendlyMessage = '配置数据不完整，请检查是否缺少闭合括号或引号';
+          }
+          
+          showLoginMsg(`${friendlyMessage}：${e.message}`, 'error');
           return;
         }
         
