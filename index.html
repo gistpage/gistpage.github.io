@@ -29,6 +29,13 @@
       overflow: hidden;
     }
     
+    /* 管理页面允许滚动 */
+    #editPage {
+      overflow: visible;
+      height: auto;
+      min-height: 100vh;
+    }
+    
     /* 管理页面的美化滚动条 */
     #editPage .admin-content {
       scrollbar-width: thin;
@@ -96,6 +103,7 @@
       display: flex; 
       flex-direction: column; 
       padding-bottom: 0;
+      height: auto;
     }
     .login-card { 
       background: rgba(255, 255, 255, 0.95); 
@@ -113,7 +121,7 @@
       justify-content: space-between;
     }
     .admin-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 1em 2em; flex-shrink: 0; }
-    .admin-content { padding: 1em 2em 1.5em 2em; flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+    .admin-content { padding: 1em 2em 1.5em 2em; flex: 1; overflow-y: auto; scroll-behavior: smooth; max-height: calc(100vh - 80px); }
     .field { margin-bottom: 0.8em; }
     .field:last-of-type { margin-bottom: 1em; }
     label { 
@@ -588,14 +596,16 @@
         
         <div class="admin-content">
           <div class="config-panel">
-            <div class="panel-title">⚙️ 应用版本配置</div>
+            <div class="panel-title">⚙️ 应用版本管理</div>
             
             <div class="field">
               <label for="versionInput">应用版本号</label>
-              <input type="number" id="versionInput" placeholder="例如：1" min="1" oninput="updateVersion()" onblur="updateVersion()">
-              <div id="versionValidation" class="url-validation" style="display: none;"></div>
+              <input type="number" id="versionInput" placeholder="例如：1" min="1" readonly disabled style="background: #f8fafc; color: #6b7280; cursor: not-allowed;">
+              <div id="versionValidation" class="url-validation" style="display: block;">
+                <span class="url-validation info">🤖 自动管理</span>
+              </div>
               <small style="color: #6b7280; margin-top: 0.5em; display: block;">
-                应用的版本标识，只能设置为递增的整数（1, 2, 3...），用于版本管理和兼容性控制
+                版本号自动维护
               </small>
             </div>
           </div>
@@ -603,7 +613,7 @@
           <div class="config-panel">
             <div class="panel-title">🌐 页面重定向管理</div>
             
-            <div class="field">
+    <div class="field">
               <label class="switch-label">重定向功能状态</label>
               <div class="switch-container">
                 <label class="switch">
@@ -617,7 +627,7 @@
               </small>
             </div>
       
-    <div class="field">
+    <div class="field" id="urlConfigField">
               <label for="redirectUrlInput">目标跳转地址 <span style="color: #ef4444;">*</span></label>
               <div class="url-input-container">
                 <input type="url" id="redirectUrlInput" placeholder="输入网址，如：example.com" oninput="updateRedirectUrl()" onblur="validateUrl()" required>
@@ -758,6 +768,7 @@
   <script>
     // 全局状态
     let currentJson = null;
+    let originalConfig = null; // 保存原始配置，用于版本管理
     let currentGistId = null;
     let currentToken = null;
     let currentFileName = null;
@@ -778,7 +789,7 @@
         content.style.display = 'block';
         toggle.textContent = '▲';
         toggle.classList.add('expanded');
-      } else {
+            } else {
         content.style.display = 'none';
         toggle.textContent = '▼';
         toggle.classList.remove('expanded');
@@ -819,6 +830,14 @@
       document.getElementById('redirectEnabled').checked = isEnabled;
       document.getElementById('redirectUrlInput').value = redirectUrl;
       
+      // 控制地址配置区域的显示/隐藏
+      const urlConfigField = document.getElementById('urlConfigField');
+      if (isEnabled) {
+        urlConfigField.style.display = 'block';
+      } else {
+        urlConfigField.style.display = 'none';
+      }
+      
       // 清除验证信息
       const versionValidation = document.getElementById('versionValidation');
       const urlValidation = document.getElementById('urlValidation');
@@ -829,55 +848,45 @@
       updateRedirectStatus();
       updateConfigPreview();
       
-      // 自动验证加载的URL
-      validateUrl();
+      // 只有在重定向启用时才验证URL
+      if (isEnabled) {
+        validateUrl();
+      }
     }
 
-    // 更新版本信息
-    function updateVersion() {
-      const input = document.getElementById('versionInput');
-      const validation = document.getElementById('versionValidation');
-      let newVersion = parseInt(input.value);
-      
-      // 获取当前版本号
-      const currentVersion = parseInt(currentJson.version) || 0;
-      
-      // 版本号验证
-      if (!newVersion || newVersion < 1) {
-        newVersion = Math.max(1, currentVersion);
-        input.value = newVersion;
-        validation.className = 'url-validation invalid';
-        validation.innerHTML = '❌ 版本号必须是大于0的整数';
-        validation.style.display = 'block';
-      } else if (newVersion < currentVersion) {
-        // 版本号不能递减
-        input.value = currentVersion;
-        validation.className = 'url-validation invalid';
-        validation.innerHTML = `❌ 版本号只能递增，当前版本为 ${currentVersion}，请输入大于等于 ${currentVersion} 的版本号`;
-        validation.style.display = 'block';
-        return;
-      } else if (newVersion === currentVersion) {
-        // 版本号相同
-        validation.className = 'url-validation info';
-        validation.innerHTML = `ℹ️ 版本号保持不变：${newVersion}`;
-        validation.style.display = 'block';
-            } else {
-        // 版本号递增
-        validation.className = 'url-validation valid';
-        validation.innerHTML = `✅ 版本号从 ${currentVersion} 升级到 ${newVersion}`;
-        validation.style.display = 'block';
-      }
-      
-      currentJson.version = String(newVersion);
-      updateConfigPreview();
-    }
+
 
     // 更新重定向启用状态
     function updateRedirectEnabled() {
       const isEnabled = document.getElementById('redirectEnabled').checked;
       currentJson.isRedirectEnabled = isEnabled;
+      
+      // 控制地址配置区域的显示/隐藏
+      const urlConfigField = document.getElementById('urlConfigField');
+      if (isEnabled) {
+        urlConfigField.style.display = 'block';
+      } else {
+        urlConfigField.style.display = 'none';
+        // 确保关闭重定向时有默认地址，避免保存失败
+        if (!currentJson.redirectUrl || currentJson.redirectUrl.trim() === '') {
+          currentJson.redirectUrl = 'https://example.com';
+          document.getElementById('redirectUrlInput').value = currentJson.redirectUrl;
+        }
+      }
+      
       updateRedirectStatus();
       updateConfigPreview();
+      
+      // 重置版本提示为默认状态
+      resetVersionValidation();
+    }
+
+    // 重置版本提示状态
+    function resetVersionValidation() {
+      const validation = document.getElementById('versionValidation');
+      validation.className = 'url-validation info';
+      validation.innerHTML = '🤖 自动管理';
+      validation.style.display = 'block';
     }
 
     // 更新重定向URL
@@ -904,6 +913,10 @@
       
       currentJson.redirectUrl = url;
       updateConfigPreview();
+      
+      // 重置版本提示为默认状态
+      resetVersionValidation();
+      
       // 隐藏验证状态，等待格式验证
       validation.style.display = 'none';
     }
@@ -914,14 +927,22 @@
       currentJson.redirectUrl = url;
       updateConfigPreview();
       validateUrl();
+      
+      // 重置版本提示为默认状态
+      resetVersionValidation();
     }
 
     // 重置URL为默认地址
     function clearUrl() {
       const defaultUrl = 'https://example.com';
+      
       document.getElementById('redirectUrlInput').value = defaultUrl;
       currentJson.redirectUrl = defaultUrl;
       updateConfigPreview();
+      
+      // 重置版本提示为默认状态
+      resetVersionValidation();
+      
       validateUrl();
       // 显示重置提示
       const validation = document.getElementById('urlValidation');
@@ -1042,8 +1063,15 @@
       document.getElementById('previewEnabledText').style.color = isEnabled ? '#10b981' : '#ef4444';
       
       // 更新跳转目标显示
-      document.getElementById('previewUrlText').textContent = redirectUrl;
-      document.getElementById('previewUrlText').style.color = '#1d4ed8';
+      if (isEnabled) {
+        // 重定向开启时显示具体URL
+        document.getElementById('previewUrlText').textContent = redirectUrl;
+        document.getElementById('previewUrlText').style.color = '#1d4ed8';
+      } else {
+        // 重定向关闭时显示隐藏状态
+        document.getElementById('previewUrlText').textContent = '已隐藏（重定向关闭时不显示）';
+        document.getElementById('previewUrlText').style.color = '#6b7280';
+      }
     }
 
     // 保守的JSON注释清理（仅处理注释，不动其他字符）
@@ -1285,6 +1313,9 @@
         // 加载配置到界面
         loadRedirectConfig();
         
+        // 保存原始配置的深拷贝，用于版本管理
+        originalConfig = JSON.parse(JSON.stringify(currentJson));
+        
         // 更新App ID显示
         const displayAppId = gistId.length > 8 ? gistId.substring(0, 8) + '...' : gistId;
         document.getElementById('currentAppId').textContent = displayAppId;
@@ -1315,18 +1346,52 @@
         return;
       }
       
-      // 验证必填字段
-      if (!currentJson.redirectUrl || currentJson.redirectUrl.trim() === '') {
-        showEditMsg('❌ 目标跳转地址不能为空，请填写有效的网址', 'error');
-        // 聚焦到URL输入框
-        document.getElementById('redirectUrlInput').focus();
-        return;
+      // 当重定向功能启用时，验证地址字段
+      if (currentJson.isRedirectEnabled) {
+        // 验证必填字段
+        if (!currentJson.redirectUrl || currentJson.redirectUrl.trim() === '') {
+          showEditMsg('❌ 目标跳转地址不能为空，请填写有效的网址', 'error');
+          // 聚焦到URL输入框
+          document.getElementById('redirectUrlInput').focus();
+          return;
+        }
+        
+        // 验证URL格式
+        if (!validateUrl()) {
+          showEditMsg('❌ 请修正目标跳转地址的格式错误后再保存', 'error');
+          return;
+        }
+      } else {
+        // 重定向关闭时，确保有默认地址避免JSON保存失败
+        if (!currentJson.redirectUrl || currentJson.redirectUrl.trim() === '') {
+          currentJson.redirectUrl = 'https://example.com';
+        }
       }
       
-      // 验证URL格式
-      if (!validateUrl()) {
-        showEditMsg('❌ 请修正目标跳转地址的格式错误后再保存', 'error');
-        return;
+      // 检查是否需要增加版本号：开关状态变化 或 (开关开启且地址发生变化)
+      const switchChanged = originalConfig && currentJson.isRedirectEnabled !== originalConfig.isRedirectEnabled;
+      const urlChangedWhenEnabled = originalConfig && 
+                                   currentJson.isRedirectEnabled === true && 
+                                   currentJson.redirectUrl !== originalConfig.redirectUrl;
+      
+      const shouldIncrementVersion = switchChanged || urlChangedWhenEnabled;
+      
+      if (shouldIncrementVersion) {
+        const oldVersion = parseInt(currentJson.version) || 0;
+        const newVersion = oldVersion + 1;
+        currentJson.version = String(newVersion);
+        
+        // 更新版本输入框显示
+        document.getElementById('versionInput').value = newVersion;
+        
+        // 显示版本递增提示
+        const validation = document.getElementById('versionValidation');
+        validation.className = 'url-validation valid';
+        validation.innerHTML = `✅ 版本 ${oldVersion} → ${newVersion}`;
+        validation.style.display = 'block';
+        
+        // 更新配置预览
+        updateConfigPreview();
       }
       
       document.getElementById('saveBtn').disabled = true;
@@ -1373,6 +1438,9 @@
         
         // 更新文件信息
         currentFileInfo = data.files[currentFileName];
+        
+        // 保存新的原始配置，用于下次对比
+        originalConfig = JSON.parse(JSON.stringify(currentJson));
         
       } catch (e) {
         console.error('保存配置时发生错误:', e);
