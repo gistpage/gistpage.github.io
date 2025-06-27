@@ -23,18 +23,36 @@
     <div class="field">
       <label for="gistId">Gist 链接或 ID</label>
       <input id="gistId" placeholder="如：a1b2c3d4e5... 或 https://gist.github.com/xxx/yyy" autocomplete="off">
+      <button type="button" onclick="loadDemo()" style="margin-top: 0.5em; background: #52c41a; width: auto; padding: 0.3em 1em; font-size: 0.9em;">加载示例</button>
     </div>
     <div class="field">
       <label for="token">GitHub Token（可选，访问私有 Gist 时需要）</label>
       <input id="token" type="password" placeholder="Personal Access Token" autocomplete="off">
     </div>
     <button onclick="loadGist()">加载 gist 配置</button>
+    
+    <div style="margin: 1em 0; padding: 0.8em; background: #f6f8fa; border-radius: 6px; font-size: 0.9em; color: #656d76;">
+      <strong>💡 使用提示：</strong><br>
+      • 支持公开和私有 Gist<br>
+      • 私有 Gist 需要提供 GitHub Token<br>
+      • 自动识别 .json 文件并生成可编辑表单<br>
+      • 可直接在线编辑配置并导出
+    </div>
+    
     <form id="jsonForm" onsubmit="event.preventDefault();"></form>
     <button id="exportBtn" onclick="exportJson()" type="button" style="display:none;">导出 JSON</button>
-    <div id="msg" class="msg">请输入 Gist 信息并加载</div>
+    <div id="msg" class="msg">请输入 Gist 信息并加载，或点击"加载示例"测试功能</div>
   </div>
   <script>
     let currentJson = null;
+
+    // 加载示例 Gist
+    function loadDemo() {
+      // 使用一个公开的示例 Gist ID，包含 JSON 配置
+      document.getElementById('gistId').value = 'fa5c67b67b8f1b3c3aa7fa11d6a9f607';
+      document.getElementById('token').value = '';
+      showMsg('已加载示例 Gist ID，点击"加载 gist 配置"来测试');
+    }
 
     // 递归渲染 JSON 为表单
     function renderJsonForm(json, container, path = []) {
@@ -139,40 +157,99 @@
       const gistId = parseGistId(gistInput);
       if (!gistId) return showMsg('请输入有效的 Gist 链接或 ID');
       showMsg('加载中...');
+      
       try {
+        // 构建请求头
+        const headers = {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Gist-JSON-Viewer/1.0'
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // 第一步：获取 Gist 信息
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-          headers: token ? { 'Authorization': 'token ' + token } : {}
+          method: 'GET',
+          headers: headers,
+          mode: 'cors'
         });
+        
         if (!res.ok) {
-          showMsg('Gist 加载失败：' + res.status + ' ' + res.statusText);
+          if (res.status === 404) {
+            showMsg('Gist 不存在或无权访问');
+          } else if (res.status === 403) {
+            showMsg('访问被拒绝，请检查 Token 权限');
+          } else if (res.status === 401) {
+            showMsg('认证失败，请检查 Token 是否正确');
+          } else {
+            showMsg(`Gist 加载失败：${res.status} ${res.statusText}`);
+          }
           return;
         }
+        
         const data = await res.json();
-        // 找到第一个 json 文件
-        const fileEntry = Object.entries(data.files).find(([k, v]) => v.language === 'JSON');
+        
+        // 找到第一个 JSON 文件
+        const fileEntry = Object.entries(data.files).find(([k, v]) => 
+          v.language === 'JSON' || k.toLowerCase().endsWith('.json')
+        );
+        
         if (!fileEntry) {
-          showMsg('未找到 JSON 文件');
+          showMsg('未找到 JSON 文件，请确保 Gist 中包含 .json 文件');
           return;
         }
-        const rawUrl = fileEntry[1].raw_url;
-        // 拉取原始 json 内容
-        const rawRes = await fetch(rawUrl, { headers: token ? { 'Authorization': 'token ' + token } : {} });
-        if (!rawRes.ok) {
-          showMsg('JSON 文件加载失败');
-          return;
+        
+        const fileName = fileEntry[0];
+        const fileInfo = fileEntry[1];
+        
+        showMsg(`找到文件：${fileName}，正在加载内容...`);
+        
+        // 第二步：获取文件内容
+        let jsonText;
+        if (fileInfo.content) {
+          // 如果内容已经在响应中（小文件）
+          jsonText = fileInfo.content;
+        } else {
+          // 如果需要从 raw_url 获取（大文件）
+          const rawRes = await fetch(fileInfo.raw_url, {
+            method: 'GET',
+            headers: headers,
+            mode: 'cors'
+          });
+          
+          if (!rawRes.ok) {
+            showMsg(`JSON 文件加载失败：${rawRes.status} ${rawRes.statusText}`);
+            return;
+          }
+          
+          jsonText = await rawRes.text();
         }
-        const jsonText = await rawRes.text();
+        
+        // 第三步：解析 JSON
         try {
           currentJson = JSON.parse(jsonText);
         } catch (e) {
-          showMsg('JSON 解析失败');
+          showMsg(`JSON 解析失败：${e.message}。请检查文件格式是否正确。`);
           return;
         }
+        
+        // 第四步：渲染表单
         renderJsonForm(currentJson, document.getElementById('jsonForm'));
         document.getElementById('exportBtn').style.display = '';
-        showMsg('加载成功，可查看和编辑配置项');
+        showMsg(`加载成功！文件：${fileName}，共 ${Object.keys(currentJson).length} 个配置项`);
+        
       } catch (e) {
-        showMsg('网络异常：' + e.message);
+        console.error('加载 Gist 时发生错误:', e);
+        
+        if (e.name === 'TypeError' && e.message.includes('fetch')) {
+          showMsg('网络连接失败，请检查：1) 网络连接 2) 是否被防火墙阻止 3) Gist ID 是否正确');
+        } else if (e.message.includes('CORS')) {
+          showMsg('跨域请求被阻止，请尝试使用 GitHub Token 或稍后再试');
+        } else {
+          showMsg(`网络异常：${e.message}`);
+        }
       }
     }
 
