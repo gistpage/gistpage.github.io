@@ -1054,16 +1054,35 @@
       // 移除多行注释 /* */
       cleanJson = cleanJson.replace(/\/\*[\s\S]*?\*\//g, '');
       
-      // 只移除真正有害的控制字符，保留所有可打印字符和基本空白字符
-      cleanJson = cleanJson.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u0080-\u009F]/g, '');
-      
       // 修复可能的编码问题 - 移除BOM标记
       cleanJson = cleanJson.replace(/^\uFEFF/, '');
       
-      // 清理多余的空白行
-      cleanJson = cleanJson.replace(/^\s*[\r\n]/gm, '');
+      // 使用更安全的逐字符检查方法
+      let result = '';
+      for (let i = 0; i < cleanJson.length; i++) {
+        const char = cleanJson[i];
+        const code = char.charCodeAt(0);
+        
+        // 保留以下字符：
+        // - 可打印ASCII字符 (32-126)
+        // - 制表符 (9)
+        // - 换行符 (10)
+        // - 回车符 (13)
+        // - 扩展ASCII字符 (128-255)
+        if ((code >= 32 && code <= 126) || 
+            code === 9 || code === 10 || code === 13 || 
+            (code >= 128 && code <= 255)) {
+          result += char;
+        } else {
+          // 记录被跳过的字符用于调试
+          console.warn(`跳过控制字符: 位置${i}, 编码${code}, 字符"${char}"`);
+        }
+      }
       
-      return cleanJson.trim();
+      // 清理多余的空白行
+      result = result.replace(/^\s*[\r\n]/gm, '');
+      
+      return result.trim();
     }
 
     // 解析 gistId 或 url
