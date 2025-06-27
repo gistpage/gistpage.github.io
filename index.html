@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gist JSON 配置查看器</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 1em; background: #f7f7f7; }
+    .container { max-width: 480px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 1em; }
+    .field { margin-bottom: 1em; }
+    label { display: block; margin-bottom: 0.3em; font-weight: bold; }
+    input, select, button { width: 100%; padding: 0.5em; font-size: 1em; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #1677ff; color: #fff; border: none; cursor: pointer; margin-top: 1em; }
+    button:disabled { background: #ccc; }
+    .switch { width: 40px; height: 20px; }
+    .msg { margin: 1em 0; color: #d46b08; }
+    .json-group { border-left: 2px solid #eee; margin-left: 0.5em; padding-left: 0.5em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Gist JSON 配置查看器</h2>
+    <div class="field">
+      <label for="gistId">Gist 链接或 ID</label>
+      <input id="gistId" placeholder="如：a1b2c3d4e5... 或 https://gist.github.com/xxx/yyy" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="token">GitHub Token（可选，访问私有 Gist 时需要）</label>
+      <input id="token" type="password" placeholder="Personal Access Token" autocomplete="off">
+    </div>
+    <button onclick="loadGist()">加载 gist 配置</button>
+    <form id="jsonForm" onsubmit="event.preventDefault();"></form>
+    <button id="exportBtn" onclick="exportJson()" type="button" style="display:none;">导出 JSON</button>
+    <div id="msg" class="msg">请输入 Gist 信息并加载</div>
+  </div>
+  <script>
+    let currentJson = null;
+
+    // 递归渲染 JSON 为表单
+    function renderJsonForm(json, container, path = []) {
+      container.innerHTML = '';
+      for (const key in json) {
+        const value = json[key];
+        const fieldPath = path.concat(key);
+        const fieldId = 'field_' + fieldPath.join('_');
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'field';
+        const label = document.createElement('label');
+        label.textContent = key;
+        label.htmlFor = fieldId;
+        fieldDiv.appendChild(label);
+        if (typeof value === 'boolean') {
+          // Switch
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.id = fieldId;
+          input.checked = value;
+          input.onchange = () => setValueByPath(currentJson, fieldPath, input.checked);
+          fieldDiv.appendChild(input);
+        } else if (typeof value === 'number' || typeof value === 'string') {
+          // 文本输入
+          const input = document.createElement('input');
+          input.type = typeof value === 'number' ? 'number' : 'text';
+          input.id = fieldId;
+          input.value = value;
+          input.oninput = () => setValueByPath(currentJson, fieldPath, input.type === 'number' ? Number(input.value) : input.value);
+          fieldDiv.appendChild(input);
+        } else if (Array.isArray(value)) {
+          // 数组递归
+          const group = document.createElement('div');
+          group.className = 'json-group';
+          value.forEach((item, idx) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'field';
+            const itemLabel = document.createElement('label');
+            itemLabel.textContent = key + '[' + idx + ']';
+            itemDiv.appendChild(itemLabel);
+            if (typeof item === 'object' && item !== null) {
+              renderJsonForm(item, itemDiv, fieldPath.concat(idx));
+            } else {
+              const input = document.createElement('input');
+              input.type = typeof item === 'number' ? 'number' : 'text';
+              input.value = item;
+              input.oninput = () => setValueByPath(currentJson, fieldPath.concat(idx), input.type === 'number' ? Number(input.value) : input.value);
+              itemDiv.appendChild(input);
+            }
+            group.appendChild(itemDiv);
+          });
+          fieldDiv.appendChild(group);
+        } else if (typeof value === 'object' && value !== null) {
+          // 嵌套对象递归
+          const group = document.createElement('div');
+          group.className = 'json-group';
+          renderJsonForm(value, group, fieldPath);
+          fieldDiv.appendChild(group);
+        } else {
+          // 其他类型只读
+          const span = document.createElement('span');
+          span.textContent = String(value);
+          fieldDiv.appendChild(span);
+        }
+        container.appendChild(fieldDiv);
+      }
+    }
+
+    // 根据路径设置值
+    function setValueByPath(obj, path, value) {
+      let o = obj;
+      for (let i = 0; i < path.length - 1; i++) {
+        o = o[path[i]];
+      }
+      o[path[path.length - 1]] = value;
+    }
+
+    // 导出 JSON 文件
+    function exportJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentJson, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", "config.json");
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      document.body.removeChild(dlAnchor);
+      showMsg('已导出 JSON 文件');
+    }
+
+    // 解析 gistId 或 url
+    function parseGistId(input) {
+      if (!input) return '';
+      if (/^[a-f0-9]{8,}$/i.test(input)) return input;
+      const m = input.match(/gist\.github\.com\/(?:[^\/]+\/)?([a-f0-9]{8,})/i);
+      return m ? m[1] : '';
+    }
+
+    // 加载 gist 配置
+    async function loadGist() {
+      const gistInput = document.getElementById('gistId').value.trim();
+      const token = document.getElementById('token').value.trim();
+      const gistId = parseGistId(gistInput);
+      if (!gistId) return showMsg('请输入有效的 Gist 链接或 ID');
+      showMsg('加载中...');
+      try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+          headers: token ? { 'Authorization': 'token ' + token } : {}
+        });
+        if (!res.ok) {
+          showMsg('Gist 加载失败：' + res.status + ' ' + res.statusText);
+          return;
+        }
+        const data = await res.json();
+        // 找到第一个 json 文件
+        const fileEntry = Object.entries(data.files).find(([k, v]) => v.language === 'JSON');
+        if (!fileEntry) {
+          showMsg('未找到 JSON 文件');
+          return;
+        }
+        const rawUrl = fileEntry[1].raw_url;
+        // 拉取原始 json 内容
+        const rawRes = await fetch(rawUrl, { headers: token ? { 'Authorization': 'token ' + token } : {} });
+        if (!rawRes.ok) {
+          showMsg('JSON 文件加载失败');
+          return;
+        }
+        const jsonText = await rawRes.text();
+        try {
+          currentJson = JSON.parse(jsonText);
+        } catch (e) {
+          showMsg('JSON 解析失败');
+          return;
+        }
+        renderJsonForm(currentJson, document.getElementById('jsonForm'));
+        document.getElementById('exportBtn').style.display = '';
+        showMsg('加载成功，可查看和编辑配置项');
+      } catch (e) {
+        showMsg('网络异常：' + e.message);
+      }
+    }
+
+    // 消息提示
+    function showMsg(msg) {
+      document.getElementById('msg').textContent = msg;
+    }
+  </script>
+</body>
+</html> 
