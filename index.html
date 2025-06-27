@@ -3,55 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Gist JSON 配置查看器</title>
+  <title>Gist JSON 配置编辑器</title>
   <style>
     body { font-family: sans-serif; margin: 0; padding: 1em; background: #f7f7f7; }
-    .container { max-width: 480px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 1em; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 2em; }
     .field { margin-bottom: 1em; }
     label { display: block; margin-bottom: 0.3em; font-weight: bold; }
-    input, select, button { width: 100%; padding: 0.5em; font-size: 1em; border-radius: 4px; border: 1px solid #ccc; }
+    input, select, button { width: 100%; padding: 0.5em; font-size: 1em; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
     button { background: #1677ff; color: #fff; border: none; cursor: pointer; margin-top: 1em; }
-    button:disabled { background: #ccc; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    button.success { background: #52c41a; }
+    button.danger { background: #ff4d4f; }
+    button.secondary { background: #8c8c8c; }
     .switch { width: 40px; height: 20px; }
-    .msg { margin: 1em 0; color: #d46b08; }
+    .msg { margin: 1em 0; padding: 0.8em; border-radius: 6px; font-weight: 500; }
+    .msg.success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+    .msg.error { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+    .msg.info { background: #f0f9ff; color: #1677ff; border: 1px solid #91d5ff; }
+    .msg.warning { background: #fffbe6; color: #d46b08; border: 1px solid #ffe58f; }
     .json-group { border-left: 2px solid #eee; margin-left: 0.5em; padding-left: 0.5em; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .header { text-align: center; margin-bottom: 2em; }
+    .header h1 { margin: 0; color: #262626; }
+    .header p { margin: 0.5em 0 0 0; color: #8c8c8c; }
+    .button-group { display: flex; gap: 0.5em; margin-top: 1em; }
+    .button-group button { margin: 0; flex: 1; }
+    .config-info { background: #e6f7ff; border-radius: 6px; padding: 1em; margin-bottom: 1em; }
+    .config-info h3 { margin: 0 0 0.5em 0; color: #1677ff; }
+    .config-info p { margin: 0; font-size: 0.9em; color: #595959; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Gist JSON 配置查看器</h2>
-    <div class="field">
-      <label for="gistId">Gist 链接或 ID</label>
-      <input id="gistId" placeholder="如：a1b2c3d4e5... 或 https://gist.github.com/xxx/yyy" autocomplete="off">
-      <button type="button" onclick="loadDemo()" style="margin-top: 0.5em; background: #52c41a; width: auto; padding: 0.3em 1em; font-size: 0.9em;">加载示例</button>
+    <!-- 登录页面 -->
+    <div id="loginPage" class="page active">
+      <div class="header">
+        <h1>Gist JSON 配置编辑器</h1>
+        <p>在线编辑和同步 GitHub Gist 中的 JSON 配置文件</p>
+      </div>
+      
+      <div class="field">
+        <label for="gistId">Gist 链接或 ID</label>
+        <input id="gistId" placeholder="如：a1b2c3d4e5... 或 https://gist.github.com/xxx/yyy" autocomplete="off">
+      </div>
+      
+      <div class="field">
+        <label for="token">GitHub Token</label>
+        <input id="token" type="password" placeholder="访问私有 Gist 或编辑配置时必需" autocomplete="off">
+      </div>
+      
+      <button onclick="connectToGist()" id="connectBtn">连接到 Gist</button>
+      
+      <div id="loginMsg" class="msg info" style="display:none;"></div>
     </div>
-    <div class="field">
-      <label for="token">GitHub Token（可选，访问私有 Gist 时需要）</label>
-      <input id="token" type="password" placeholder="Personal Access Token" autocomplete="off">
+
+    <!-- 配置编辑页面 -->
+    <div id="editPage" class="page">
+      <div class="config-info">
+        <h3 id="configTitle">配置文件信息</h3>
+        <p id="configDesc">文件：<span id="fileName"></span> | 配置项：<span id="configCount"></span></p>
+      </div>
+      
+      <form id="jsonForm" onsubmit="event.preventDefault();"></form>
+      
+      <div class="button-group">
+        <button onclick="saveToGist()" id="saveBtn" class="success">保存到 Gist</button>
+        <button onclick="exportJson()" class="secondary">导出本地</button>
+        <button onclick="backToLogin()" class="danger">返回</button>
+      </div>
+      
+      <div id="editMsg" class="msg info" style="display:none;"></div>
     </div>
-    <button onclick="loadGist()">加载 gist 配置</button>
-    
-    <div style="margin: 1em 0; padding: 0.8em; background: #f6f8fa; border-radius: 6px; font-size: 0.9em; color: #656d76;">
-      <strong>💡 使用提示：</strong><br>
-      • 支持公开和私有 Gist<br>
-      • 私有 Gist 需要提供 GitHub Token<br>
-      • 自动识别 .json 文件并生成可编辑表单<br>
-      • 可直接在线编辑配置并导出
-    </div>
-    
-    <form id="jsonForm" onsubmit="event.preventDefault();"></form>
-    <button id="exportBtn" onclick="exportJson()" type="button" style="display:none;">导出 JSON</button>
-    <div id="msg" class="msg">请输入 Gist 信息并加载，或点击"加载示例"测试功能</div>
   </div>
   <script>
+    // 全局状态
     let currentJson = null;
+    let currentGistId = null;
+    let currentToken = null;
+    let currentFileName = null;
+    let currentFileInfo = null;
 
-    // 加载示例 Gist
-    function loadDemo() {
-      // 使用一个公开的示例 Gist ID，包含 JSON 配置
-      document.getElementById('gistId').value = 'fa5c67b67b8f1b3c3aa7fa11d6a9f607';
-      document.getElementById('token').value = '';
-      showMsg('已加载示例 Gist ID，点击"加载 gist 配置"来测试');
+    // 页面切换
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    // 返回登录页面
+    function backToLogin() {
+      currentJson = null;
+      currentGistId = null;
+      currentToken = null;
+      currentFileName = null;
+      currentFileInfo = null;
+      showPage('loginPage');
+      showLoginMsg('请输入 Gist 信息进行连接', 'info');
     }
 
     // 递归渲染 JSON 为表单
@@ -130,16 +177,21 @@
       o[path[path.length - 1]] = value;
     }
 
-    // 导出 JSON 文件
+    // 导出 JSON 文件到本地
     function exportJson() {
+      if (!currentJson) {
+        showEditMsg('没有可导出的配置数据', 'warning');
+        return;
+      }
+      
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentJson, null, 2));
       const dlAnchor = document.createElement('a');
       dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", "config.json");
+      dlAnchor.setAttribute("download", currentFileName || "config.json");
       document.body.appendChild(dlAnchor);
       dlAnchor.click();
       document.body.removeChild(dlAnchor);
-      showMsg('已导出 JSON 文件');
+      showEditMsg('📥 配置已导出到本地', 'success');
     }
 
     // 解析 gistId 或 url
@@ -150,26 +202,27 @@
       return m ? m[1] : '';
     }
 
-    // 加载 gist 配置
-    async function loadGist() {
+    // 连接到 Gist 并加载配置
+    async function connectToGist() {
       const gistInput = document.getElementById('gistId').value.trim();
       const token = document.getElementById('token').value.trim();
       const gistId = parseGistId(gistInput);
-      if (!gistId) return showMsg('请输入有效的 Gist 链接或 ID');
-      showMsg('加载中...');
+      
+      if (!gistId) return showLoginMsg('请输入有效的 Gist 链接或 ID', 'error');
+      if (!token) return showLoginMsg('请输入 GitHub Token 以获得编辑权限', 'warning');
+      
+      document.getElementById('connectBtn').disabled = true;
+      showLoginMsg('正在连接到 Gist...', 'info');
       
       try {
         // 构建请求头
         const headers = {
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Gist-JSON-Viewer/1.0'
+          'User-Agent': 'Gist-JSON-Editor/1.0',
+          'Authorization': `Bearer ${token}`
         };
         
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        // 第一步：获取 Gist 信息
+        // 获取 Gist 信息
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
           method: 'GET',
           headers: headers,
@@ -178,13 +231,13 @@
         
         if (!res.ok) {
           if (res.status === 404) {
-            showMsg('Gist 不存在或无权访问');
+            showLoginMsg('Gist 不存在或无权访问', 'error');
           } else if (res.status === 403) {
-            showMsg('访问被拒绝，请检查 Token 权限');
+            showLoginMsg('访问被拒绝，请检查 Token 权限', 'error');
           } else if (res.status === 401) {
-            showMsg('认证失败，请检查 Token 是否正确');
+            showLoginMsg('认证失败，请检查 Token 是否正确', 'error');
           } else {
-            showMsg(`Gist 加载失败：${res.status} ${res.statusText}`);
+            showLoginMsg(`连接失败：${res.status} ${res.statusText}`, 'error');
           }
           return;
         }
@@ -197,22 +250,20 @@
         );
         
         if (!fileEntry) {
-          showMsg('未找到 JSON 文件，请确保 Gist 中包含 .json 文件');
+          showLoginMsg('未找到 JSON 文件，请确保 Gist 中包含 .json 文件', 'error');
           return;
         }
         
         const fileName = fileEntry[0];
         const fileInfo = fileEntry[1];
         
-        showMsg(`找到文件：${fileName}，正在加载内容...`);
+        showLoginMsg(`找到文件：${fileName}，正在加载内容...`, 'info');
         
-        // 第二步：获取文件内容
+        // 获取文件内容
         let jsonText;
         if (fileInfo.content) {
-          // 如果内容已经在响应中（小文件）
           jsonText = fileInfo.content;
         } else {
-          // 如果需要从 raw_url 获取（大文件）
           const rawRes = await fetch(fileInfo.raw_url, {
             method: 'GET',
             headers: headers,
@@ -220,42 +271,140 @@
           });
           
           if (!rawRes.ok) {
-            showMsg(`JSON 文件加载失败：${rawRes.status} ${rawRes.statusText}`);
+            showLoginMsg(`文件加载失败：${rawRes.status} ${rawRes.statusText}`, 'error');
             return;
           }
           
           jsonText = await rawRes.text();
         }
         
-        // 第三步：解析 JSON
+        // 解析 JSON
         try {
           currentJson = JSON.parse(jsonText);
         } catch (e) {
-          showMsg(`JSON 解析失败：${e.message}。请检查文件格式是否正确。`);
+          showLoginMsg(`JSON 解析失败：${e.message}`, 'error');
           return;
         }
         
-        // 第四步：渲染表单
+        // 保存全局状态
+        currentGistId = gistId;
+        currentToken = token;
+        currentFileName = fileName;
+        currentFileInfo = fileInfo;
+        
+        // 更新页面信息
+        document.getElementById('fileName').textContent = fileName;
+        document.getElementById('configCount').textContent = Object.keys(currentJson).length;
+        
+        // 渲染表单
         renderJsonForm(currentJson, document.getElementById('jsonForm'));
-        document.getElementById('exportBtn').style.display = '';
-        showMsg(`加载成功！文件：${fileName}，共 ${Object.keys(currentJson).length} 个配置项`);
+        
+        // 切换到编辑页面
+        showPage('editPage');
+        showEditMsg(`成功连接！共加载 ${Object.keys(currentJson).length} 个配置项`, 'success');
         
       } catch (e) {
-        console.error('加载 Gist 时发生错误:', e);
+        console.error('连接 Gist 时发生错误:', e);
         
         if (e.name === 'TypeError' && e.message.includes('fetch')) {
-          showMsg('网络连接失败，请检查：1) 网络连接 2) 是否被防火墙阻止 3) Gist ID 是否正确');
+          showLoginMsg('网络连接失败，请检查网络连接和 Gist ID', 'error');
         } else if (e.message.includes('CORS')) {
-          showMsg('跨域请求被阻止，请尝试使用 GitHub Token 或稍后再试');
+          showLoginMsg('跨域请求被阻止，请稍后再试', 'error');
         } else {
-          showMsg(`网络异常：${e.message}`);
+          showLoginMsg(`网络异常：${e.message}`, 'error');
         }
+      } finally {
+        document.getElementById('connectBtn').disabled = false;
       }
     }
 
-    // 消息提示
-    function showMsg(msg) {
-      document.getElementById('msg').textContent = msg;
+    // 保存到 Gist
+    async function saveToGist() {
+      if (!currentGistId || !currentToken || !currentFileName || !currentJson) {
+        showEditMsg('缺少必要信息，请重新连接到 Gist', 'error');
+        return;
+      }
+      
+      document.getElementById('saveBtn').disabled = true;
+      showEditMsg('正在保存到 Gist...', 'info');
+      
+      try {
+        const headers = {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Gist-JSON-Editor/1.0',
+          'Authorization': `Bearer ${currentToken}`,
+          'Content-Type': 'application/json'
+        };
+        
+        const requestBody = {
+          files: {
+            [currentFileName]: {
+              content: JSON.stringify(currentJson, null, 2)
+            }
+          }
+        };
+        
+        const res = await fetch(`https://api.github.com/gists/${currentGistId}`, {
+          method: 'PATCH',
+          headers: headers,
+          mode: 'cors',
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (!res.ok) {
+          if (res.status === 404) {
+            showEditMsg('Gist 不存在或已被删除', 'error');
+          } else if (res.status === 403) {
+            showEditMsg('没有编辑权限，请检查 Token 权限', 'error');
+          } else if (res.status === 401) {
+            showEditMsg('认证失败，Token 可能已过期', 'error');
+          } else {
+            showEditMsg(`保存失败：${res.status} ${res.statusText}`, 'error');
+          }
+          return;
+        }
+        
+        const data = await res.json();
+        showEditMsg('✨ 保存成功！配置已同步到 GitHub Gist', 'success');
+        
+        // 更新文件信息
+        currentFileInfo = data.files[currentFileName];
+        
+      } catch (e) {
+        console.error('保存到 Gist 时发生错误:', e);
+        showEditMsg(`保存失败：${e.message}`, 'error');
+      } finally {
+        document.getElementById('saveBtn').disabled = false;
+      }
+    }
+
+    // 消息显示系统
+    function showLoginMsg(msg, type = 'info') {
+      const msgElement = document.getElementById('loginMsg');
+      msgElement.textContent = msg;
+      msgElement.className = `msg ${type}`;
+      msgElement.style.display = 'block';
+      
+      // 自动隐藏成功消息
+      if (type === 'success') {
+        setTimeout(() => {
+          msgElement.style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    function showEditMsg(msg, type = 'info') {
+      const msgElement = document.getElementById('editMsg');
+      msgElement.textContent = msg;
+      msgElement.className = `msg ${type}`;
+      msgElement.style.display = 'block';
+      
+      // 自动隐藏成功消息
+      if (type === 'success') {
+        setTimeout(() => {
+          msgElement.style.display = 'none';
+        }, 5000);
+      }
     }
   </script>
 </body>
