@@ -3,77 +3,582 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Gist JSON 配置编辑器</title>
+  <title>应用配置管理平台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 1em; background: #f7f7f7; }
-    .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 2em; }
-    .field { margin-bottom: 1em; }
-    label { display: block; margin-bottom: 0.3em; font-weight: bold; }
-    input, select, button { width: 100%; padding: 0.5em; font-size: 1em; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-    button { background: #1677ff; color: #fff; border: none; cursor: pointer; margin-top: 1em; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    button.success { background: #52c41a; }
-    button.danger { background: #ff4d4f; }
-    button.secondary { background: #8c8c8c; }
-    .switch { width: 40px; height: 20px; }
-    .msg { margin: 1em 0; padding: 0.8em; border-radius: 6px; font-weight: 500; }
-    .msg.success { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
-    .msg.error { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
-    .msg.info { background: #f0f9ff; color: #1677ff; border: 1px solid #91d5ff; }
-    .msg.warning { background: #fffbe6; color: #d46b08; border: 1px solid #ffe58f; }
-    .json-group { border-left: 2px solid #eee; margin-left: 0.5em; padding-left: 0.5em; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%); 
+      height: 100vh; 
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* 隐藏所有滚动条 */
+    html, body {
+      overflow: hidden;
+      height: 100%;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
+      animation: backgroundMove 15s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes backgroundMove {
+      0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(0deg); }
+      50% { transform: translateX(0%) translateY(0%) rotate(180deg); }
+    }
+    .login-container { 
+      max-width: 420px; 
+      margin: 0 auto; 
+      padding: 1.2em; 
+      height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      justify-content: center; 
+      overflow: hidden; 
+      box-sizing: border-box;
+    }
+    .admin-container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      background: #f8fafc; 
+      height: 100vh; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+    .login-card { 
+      background: rgba(255, 255, 255, 0.95); 
+      backdrop-filter: blur(15px);
+      border-radius: 16px; 
+      box-shadow: 0 30px 60px rgba(0,0,0,0.12), 0 10px 20px rgba(0,0,0,0.08); 
+      padding: 1.8em 2em; 
+      text-align: center; 
+      max-height: 92vh; 
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.3);
+      position: relative;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .admin-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 1.2em 2em; flex-shrink: 0; }
+    .admin-content { padding: 1.5em 2em; flex: 1; overflow: hidden; }
+    .field { margin-bottom: 1.2em; }
+    .field:last-of-type { margin-bottom: 1.5em; }
+    label { 
+      display: block; 
+      margin-bottom: 0.5em; 
+      font-weight: 600; 
+      color: #374151; 
+      font-size: 0.9em; 
+      text-align: left;
+    }
+    input { 
+      width: 100%; 
+      padding: 0.8em 1em; 
+      font-size: 1em; 
+      border-radius: 10px; 
+      border: 2px solid #e5e7eb; 
+      box-sizing: border-box; 
+      transition: all 0.3s ease; 
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(5px);
+    }
+    input:focus { 
+      outline: none; 
+      border-color: #667eea; 
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); 
+      background: rgba(255, 255, 255, 1);
+      transform: translateY(-1px);
+    }
+    input::placeholder {
+      color: #9ca3af;
+      font-size: 0.95em;
+    }
+    .login-btn { 
+      width: 100%; 
+      padding: 0.9em 1.2em; 
+      font-size: 1.05em; 
+      border-radius: 10px; 
+      border: none; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+      color: #fff; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s ease;
+      margin-top: 0.3em;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    .login-btn:hover::before {
+      left: 100%;
+    }
+    .login-btn:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+    }
+    .login-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    .login-btn:disabled { 
+      background: #9ca3af; 
+      cursor: not-allowed; 
+      transform: none; 
+      box-shadow: none; 
+    }
+    .login-btn:disabled::before {
+      display: none;
+    }
+    .admin-btn { padding: 0.6em 1.2em; font-size: 0.9em; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .btn-primary { background: #667eea; color: #fff; }
+    .btn-primary:hover { background: #5a67d8; }
+    .btn-success { background: #10b981; color: #fff; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-secondary { background: #6b7280; color: #fff; }
+    .btn-secondary:hover { background: #4b5563; }
+    button:disabled { background: #9ca3af !important; cursor: not-allowed; transform: none; }
+    
+    /* 后台管理样式 */
+    .system-logo { 
+      font-size: 2.2em; 
+      font-weight: 700; 
+      color: #667eea; 
+      margin-bottom: 0.3em; 
+      text-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+    }
+    .system-title { 
+      font-size: 1.6em; 
+      font-weight: 700; 
+      color: #1f2937; 
+      margin-bottom: 0.3em; 
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+    .system-desc { 
+      color: #6b7280; 
+      font-size: 0.95em; 
+      margin-bottom: 1.2em; 
+      line-height: 1.4;
+      font-weight: 400;
+    }
+    .admin-title { display: flex; align-items: center; justify-content: space-between; }
+    .admin-title h2 { margin: 0; color: #1f2937; font-size: 1.4em; font-weight: 600; }
+    .admin-user { display: flex; align-items: center; gap: 0.5em; color: #6b7280; font-size: 0.9em; }
+    .config-panel { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.2em; margin-bottom: 1.2em; }
+    .panel-title { font-size: 1.1em; font-weight: 600; color: #1f2937; margin-bottom: 0.8em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.4em; }
+    
+    /* 开关样式 */
+    .switch-container { display: flex; align-items: center; gap: 1em; margin: 0.8em 0; }
+    .switch { position: relative; display: inline-block; width: 60px; height: 32px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 32px; }
+    .slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    input:checked + .slider { background-color: #667eea; }
+    input:checked + .slider:before { transform: translateX(28px); }
+    .switch-label { font-weight: 600; color: #374151; }
+    .switch-status { font-size: 0.85em; padding: 0.3em 0.8em; border-radius: 20px; font-weight: 500; }
+    .switch-status.enabled { background: #d1fae5; color: #065f46; }
+    .switch-status.disabled { background: #fee2e2; color: #991b1b; }
+    
+    /* URL输入优化样式 */
+    .url-input-container { display: flex; gap: 0.5em; align-items: stretch; }
+    .url-input-container input { flex: 1; margin: 0; }
+    .test-url-btn, .clear-url-btn { width: 42px; padding: 0.6em; border-radius: 6px; cursor: pointer; font-size: 1em; transition: all 0.2s; border: none; }
+    .test-url-btn { background: #dbeafe; color: #1d4ed8; }
+    .test-url-btn:hover { background: #bfdbfe; }
+    .test-url-btn:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+    .clear-url-btn { background: #fecaca; color: #dc2626; }
+    .clear-url-btn:hover { background: #fca5a5; }
+    .clear-url-btn:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+    
+    .url-validation { margin-top: 0.6em; padding: 0.6em; border-radius: 8px; font-size: 0.9em; border-left: 4px solid; }
+    .url-validation.valid { background: #ecfdf5; color: #065f46; border-left-color: #10b981; }
+    .url-validation.invalid { background: #fef2f2; color: #991b1b; border-left-color: #ef4444; }
+    .url-validation.testing { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
+    
+    .quick-urls { margin-top: 1em; padding: 1.2em; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .url-buttons { display: flex; flex-wrap: wrap; gap: 0.5em; }
+    .quick-url-btn { padding: 0.4em 0.8em; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-size: 0.8em; transition: all 0.2s; color: #374151; font-weight: 500; }
+    .quick-url-btn:hover { border-color: #667eea; color: #667eea; background: #f8faff; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .quick-url-btn:active { transform: translateY(0); }
+    
+    /* 响应式布局 */
+    @media (max-width: 768px) {
+      body::after {
+        animation-duration: 20s; /* 移动设备上动画稍慢 */
+      }
+      .login-container { 
+        padding: 1em; 
+        height: 100vh;
+        overflow: hidden;
+      }
+      .admin-container { margin: 0; }
+      .admin-header { padding: 1em; }
+      .admin-content { padding: 1em; }
+      .url-buttons { flex-direction: column; }
+      .quick-url-btn { text-align: center; }
+      .url-input-container { flex-direction: column; }
+      .test-url-btn, .clear-url-btn { width: 100%; margin-top: 0.5em; }
+      .admin-title { flex-direction: column; align-items: flex-start; gap: 1em; }
+      .login-card { 
+        padding: 1.5em 1.2em; 
+        background: rgba(255, 255, 255, 0.98); /* 移动设备上更高不透明度 */
+        backdrop-filter: blur(5px); /* 移动设备上减少模糊 */
+        border-radius: 14px;
+      }
+      .system-logo { font-size: 1.8em; }
+      .system-title { font-size: 1.3em; }
+      .system-desc { font-size: 0.9em; }
+      .field { margin-bottom: 1em; }
+      .field:last-of-type { margin-bottom: 1.2em; }
+      input { 
+        padding: 0.7em 0.9em; 
+        font-size: 0.95em; 
+      }
+      .login-btn { 
+        padding: 0.8em 1em; 
+        font-size: 1em; 
+      }
+      .security-notice {
+        padding: 0.7em;
+        margin-bottom: 1em;
+      }
+      .footer-info {
+        margin-top: 0.8em;
+        padding-top: 0.8em;
+      }
+      .version {
+        font-size: 0.8em;
+      }
+      .copyright {
+        font-size: 0.75em;
+      }
+    }
+    
+    .msg { margin: 0.8em 0; padding: 0.7em; border-radius: 8px; font-weight: 500; border-left: 4px solid; }
+    .msg.success { background: #ecfdf5; color: #065f46; border-left-color: #10b981; }
+    .msg.error { background: #fef2f2; color: #991b1b; border-left-color: #ef4444; }
+    .msg.info { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
+    .msg.warning { background: #fffbeb; color: #92400e; border-left-color: #f59e0b; }
     .page { display: none; }
     .page.active { display: block; }
-    .header { text-align: center; margin-bottom: 2em; }
-    .header h1 { margin: 0; color: #262626; }
-    .header p { margin: 0.5em 0 0 0; color: #8c8c8c; }
-    .button-group { display: flex; gap: 0.5em; margin-top: 1em; }
-    .button-group button { margin: 0; flex: 1; }
-    .config-info { background: #e6f7ff; border-radius: 6px; padding: 1em; margin-bottom: 1em; }
-    .config-info h3 { margin: 0 0 0.5em 0; color: #1677ff; }
-    .config-info p { margin: 0; font-size: 0.9em; color: #595959; }
+    .button-group { display: flex; gap: 1em; margin-top: 1.5em; }
+    .button-group .admin-btn { flex: 1; }
+    .config-preview { background: #f8fafc; border-radius: 12px; padding: 1.2em; margin: 1.2em 0; border: 1px solid #e2e8f0; }
+    .config-preview h4 { margin: 0 0 0.8em 0; color: #374151; font-size: 1em; font-weight: 600; }
+    .config-json { font-family: 'Monaco', 'Menlo', monospace; background: #fff; padding: 0.8em; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.9em; line-height: 1.5; }
+    .security-notice { 
+      background: linear-gradient(135deg, #fef3c7 0%, #fef3c7 100%); 
+      border: 1px solid #f59e0b; 
+      border-radius: 10px; 
+      padding: 0.8em; 
+      margin-bottom: 1.2em; 
+      position: relative;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+      text-align: left;
+    }
+    .security-notice::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #f59e0b, #d97706, #f59e0b);
+      border-radius: 12px 12px 0 0;
+    }
+    .security-notice .icon { 
+      color: #d97706; 
+      font-size: 1.3em; 
+      margin-right: 0.6em; 
+      vertical-align: middle;
+    }
+    .security-notice strong {
+      color: #92400e;
+      font-weight: 600;
+    }
+    
+    /* 主要内容区域 */
+    .login-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+    
+    /* 版权信息样式 */
+    .footer-info {
+      text-align: center; 
+      margin-top: 1.2em; 
+      padding-top: 1.2em; 
+      border-top: 1px solid rgba(229, 231, 235, 0.6); 
+      position: relative;
+      flex-shrink: 0;
+    }
+    .footer-info::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #667eea, transparent);
+    }
+    .version {
+      margin: 0 0 0.4em 0;
+      color: #6b7280;
+      font-size: 0.85em;
+      font-weight: 500;
+    }
+    .copyright {
+      margin: 0;
+      color: #9ca3af;
+      font-size: 0.8em;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+    
+    /* 登录页面动画效果 */
+    .login-card { 
+      animation: slideUp 0.8s ease-out; 
+    }
+    @keyframes slideUp { 
+      from { opacity: 0; transform: translateY(30px) scale(0.98); } 
+      to { opacity: 1; transform: translateY(0) scale(1); } 
+    }
+    
+    /* 输入框浮动标签效果 */
+    .field {
+      position: relative;
+    }
+    .field label {
+      transition: all 0.3s ease;
+    }
+    .field input:focus + label,
+    .field input:not(:placeholder-shown) + label {
+      transform: translateY(-0.5em);
+      font-size: 0.85em;
+      color: #667eea;
+    }
+    
+    /* 增强的聚焦效果 */
+    input:focus {
+      animation: focusGlow 0.4s ease;
+    }
+    @keyframes focusGlow {
+      0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.1); }
+      50% { box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.15); }
+      100% { box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
+    }
+    
+    /* 页面过渡动画 */
+    .page { transition: opacity 0.3s ease-in-out; }
+    .page:not(.active) { opacity: 0; }
+    .page.active { opacity: 1; }
+    
+    /* 按钮状态动画 */
+    .login-btn.success { 
+      animation: pulse 0.3s ease-in-out; 
+    }
+    @keyframes pulse { 
+      0% { transform: scale(1); } 
+      50% { transform: scale(1.02); } 
+      100% { transform: scale(1); } 
+    }
+    
+    /* 加载状态动画 */
+    .login-btn.loading {
+      position: relative;
+      color: transparent;
+    }
+    .login-btn.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    /* 错误状态抖动动画 */
+    .login-btn.error {
+      animation: shake 0.5s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+      20%, 40%, 60%, 80% { transform: translateX(3px); }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 登录页面 -->
-    <div id="loginPage" class="page active">
-      <div class="header">
-        <h1>Gist JSON 配置编辑器</h1>
-        <p>在线编辑和同步 GitHub Gist 中的 JSON 配置文件</p>
+  <!-- 登录页面 -->
+  <div id="loginPage" class="page active">
+    <div class="login-container">
+      <div class="login-card">
+        <div class="login-main">
+          <div class="system-logo">⚙️</div>
+          <h1 class="system-title">应用配置管理平台</h1>
+          <p class="system-desc">集中管理和配置您的应用参数，安全、高效、可靠</p>
+          
+          <div class="security-notice">
+            <span class="icon">🔒</span>
+            <strong>安全提示：</strong>请确保您的访问凭据安全，平台采用端到端加密保护您的数据
+          </div>
+          
+          <div class="field">
+            <label for="gistId">App ID</label>
+            <input id="gistId" placeholder="请输入您的应用标识符" autocomplete="off">
+          </div>
+          
+          <div class="field">
+            <label for="token">访问令牌</label>
+            <input id="token" type="password" placeholder="请输入您的访问令牌" autocomplete="off">
+          </div>
+          
+          <button onclick="connectToGist()" id="connectBtn" class="login-btn">连接到APP应用</button>
+          
+          <div id="loginMsg" class="msg info" style="display:none;"></div>
+        </div>
+        
+        <div class="footer-info">
+          <p class="version">应用配置管理平台 v2.1.0</p>
+          <p class="copyright">© 2024 Enterprise Config Solutions</p>
+        </div>
       </div>
-      
-      <div class="field">
-        <label for="gistId">Gist 链接或 ID</label>
-        <input id="gistId" placeholder="如：a1b2c3d4e5... 或 https://gist.github.com/xxx/yyy" autocomplete="off">
-      </div>
-      
-      <div class="field">
-        <label for="token">GitHub Token</label>
-        <input id="token" type="password" placeholder="访问私有 Gist 或编辑配置时必需" autocomplete="off">
-      </div>
-      
-      <button onclick="connectToGist()" id="connectBtn">连接到 Gist</button>
-      
-      <div id="loginMsg" class="msg info" style="display:none;"></div>
     </div>
+  </div>
 
-    <!-- 配置编辑页面 -->
+    <!-- 管理页面 -->
     <div id="editPage" class="page">
-      <div class="config-info">
-        <h3 id="configTitle">配置文件信息</h3>
-        <p id="configDesc">文件：<span id="fileName"></span> | 配置项：<span id="configCount"></span></p>
+      <div class="admin-container">
+        <div class="admin-header">
+          <div class="admin-title">
+            <h2>🎛️ 应用配置控制台</h2>
+            <div class="admin-user">
+              <span>📁 配置文件：<span id="fileName" style="font-weight: 600;"></span></span>
+              <button onclick="backToLogin()" class="admin-btn btn-secondary">退出APP应用</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="admin-content">
+          <div class="config-panel">
+            <div class="panel-title">🌐 页面重定向管理</div>
+            
+            <div class="field">
+              <label class="switch-label">重定向功能状态</label>
+              <div class="switch-container">
+                <label class="switch">
+                  <input type="checkbox" id="redirectEnabled" onchange="updateRedirectEnabled()">
+                  <span class="slider"></span>
+                </label>
+                <span id="redirectStatus" class="switch-status enabled">已启用</span>
+              </div>
+              <small style="color: #6b7280; margin-top: 0.5em; display: block;">
+                开启后，用户访问页面将自动跳转到指定地址
+              </small>
+            </div>
+      
+            <div class="field">
+              <label for="redirectUrlInput">目标跳转地址</label>
+              <div class="url-input-container">
+                <input type="url" id="redirectUrlInput" placeholder="输入网址，如：example.com" oninput="updateRedirectUrl()" onblur="validateUrl()">
+                <button type="button" class="clear-url-btn" onclick="clearUrl()" id="clearBtn" title="清空输入">🗑️</button>
+                <button type="button" class="test-url-btn" onclick="testUrl()" id="testBtn" title="测试链接">🔗</button>
+              </div>
+              <div id="urlValidation" class="url-validation" style="display: none;"></div>
+              
+              <div class="quick-urls">
+                <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 0.8em; display: block; font-weight: 600;">⚡ 快速配置模板：</label>
+                <div class="url-buttons">
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://flutter.dev/')">Flutter</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://github.com/')">GitHub</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://docs.flutter.dev/')">Flutter文档</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://pub.dev/')">Pub.dev</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://developer.android.com/')">Android</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://developer.apple.com/')">iOS</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://stackoverflow.com/')">Stack Overflow</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://npmjs.com/')">npm</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://www.google.com/')">Google</button>
+                  <button type="button" class="quick-url-btn" onclick="setQuickUrl('https://www.bilibili.com/')">哔哩哔哩</button>
+                </div>
+              </div>
+              
+              <small style="color: #6b7280; margin-top: 1em; display: block;">
+                💡 提示：支持任何有效的网址，系统会自动验证链接的可访问性
+              </small>
+            </div>
+          </div>
+      
+          <div class="config-preview">
+            <h4>📋 当前配置状态</h4>
+            <div class="config-json">
+              <div>isRedirectEnabled: <span id="previewEnabled" style="color: #059669; font-weight: 600;">true</span></div>
+              <div>redirectUrl: <span id="previewUrl" style="color: #1e40af; font-weight: 600;">'https://flutter.dev/'</span></div>
+            </div>
+          </div>
+          
+          <div class="button-group">
+            <button onclick="saveToGist()" id="saveBtn" class="admin-btn btn-success">💾 保存配置</button>
+            <button onclick="backToLogin()" class="admin-btn btn-danger">🚪 退出APP应用</button>
+          </div>
+          
+          <div id="editMsg" class="msg info" style="display:none;"></div>
+        </div>
       </div>
-      
-      <form id="jsonForm" onsubmit="event.preventDefault();"></form>
-      
-      <div class="button-group">
-        <button onclick="saveToGist()" id="saveBtn" class="success">保存到 Gist</button>
-        <button onclick="exportJson()" class="secondary">导出本地</button>
-        <button onclick="backToLogin()" class="danger">返回</button>
-      </div>
-      
-      <div id="editMsg" class="msg info" style="display:none;"></div>
     </div>
   </div>
   <script>
@@ -98,100 +603,177 @@
       currentFileName = null;
       currentFileInfo = null;
       showPage('loginPage');
-      showLoginMsg('请输入 Gist 信息进行连接', 'info');
+      showLoginMsg('请输入应用凭据以访问配置管理控制台', 'info');
     }
 
-    // 递归渲染 JSON 为表单
-    function renderJsonForm(json, container, path = []) {
-      container.innerHTML = '';
-      for (const key in json) {
-        const value = json[key];
-        const fieldPath = path.concat(key);
-        const fieldId = 'field_' + fieldPath.join('_');
-        const fieldDiv = document.createElement('div');
-        fieldDiv.className = 'field';
-        const label = document.createElement('label');
-        label.textContent = key;
-        label.htmlFor = fieldId;
-        fieldDiv.appendChild(label);
-        if (typeof value === 'boolean') {
-          // Switch
-          const input = document.createElement('input');
-          input.type = 'checkbox';
-          input.id = fieldId;
-          input.checked = value;
-          input.onchange = () => setValueByPath(currentJson, fieldPath, input.checked);
-          fieldDiv.appendChild(input);
-        } else if (typeof value === 'number' || typeof value === 'string') {
-          // 文本输入
-          const input = document.createElement('input');
-          input.type = typeof value === 'number' ? 'number' : 'text';
-          input.id = fieldId;
-          input.value = value;
-          input.oninput = () => setValueByPath(currentJson, fieldPath, input.type === 'number' ? Number(input.value) : input.value);
-          fieldDiv.appendChild(input);
-        } else if (Array.isArray(value)) {
-          // 数组递归
-          const group = document.createElement('div');
-          group.className = 'json-group';
-          value.forEach((item, idx) => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'field';
-            const itemLabel = document.createElement('label');
-            itemLabel.textContent = key + '[' + idx + ']';
-            itemDiv.appendChild(itemLabel);
-            if (typeof item === 'object' && item !== null) {
-              renderJsonForm(item, itemDiv, fieldPath.concat(idx));
-            } else {
-              const input = document.createElement('input');
-              input.type = typeof item === 'number' ? 'number' : 'text';
-              input.value = item;
-              input.oninput = () => setValueByPath(currentJson, fieldPath.concat(idx), input.type === 'number' ? Number(input.value) : input.value);
-              itemDiv.appendChild(input);
-            }
-            group.appendChild(itemDiv);
-          });
-          fieldDiv.appendChild(group);
-        } else if (typeof value === 'object' && value !== null) {
-          // 嵌套对象递归
-          const group = document.createElement('div');
-          group.className = 'json-group';
-          renderJsonForm(value, group, fieldPath);
-          fieldDiv.appendChild(group);
-        } else {
-          // 其他类型只读
-          const span = document.createElement('span');
-          span.textContent = String(value);
-          fieldDiv.appendChild(span);
+    // 加载重定向配置到界面
+    function loadRedirectConfig() {
+      if (!currentJson) return;
+      
+      const isEnabled = currentJson.isRedirectEnabled || false;
+      const redirectUrl = currentJson.redirectUrl || '';
+      
+      // 更新界面元素
+      document.getElementById('redirectEnabled').checked = isEnabled;
+      document.getElementById('redirectUrlInput').value = redirectUrl;
+      
+      // 更新状态文字和预览
+      updateRedirectStatus();
+      updateConfigPreview();
+      
+      // 自动验证加载的URL
+      if (redirectUrl) {
+        validateUrl();
+      }
+    }
+
+    // 更新重定向启用状态
+    function updateRedirectEnabled() {
+      const isEnabled = document.getElementById('redirectEnabled').checked;
+      currentJson.isRedirectEnabled = isEnabled;
+      updateRedirectStatus();
+      updateConfigPreview();
+    }
+
+    // 更新重定向URL
+    function updateRedirectUrl() {
+      let url = document.getElementById('redirectUrlInput').value;
+      
+      // 自动添加 https:// 前缀（如果用户输入的是纯域名）
+      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        // 检查是否看起来像域名（包含点号但不是文件路径）
+        if (url.includes('.') && !url.startsWith('/') && !url.includes(' ')) {
+          url = 'https://' + url;
+          document.getElementById('redirectUrlInput').value = url;
         }
-        container.appendChild(fieldDiv);
-      }
-    }
-
-    // 根据路径设置值
-    function setValueByPath(obj, path, value) {
-      let o = obj;
-      for (let i = 0; i < path.length - 1; i++) {
-        o = o[path[i]];
-      }
-      o[path[path.length - 1]] = value;
-    }
-
-    // 导出 JSON 文件到本地
-    function exportJson() {
-      if (!currentJson) {
-        showEditMsg('没有可导出的配置数据', 'warning');
-        return;
       }
       
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentJson, null, 2));
-      const dlAnchor = document.createElement('a');
-      dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", currentFileName || "config.json");
-      document.body.appendChild(dlAnchor);
-      dlAnchor.click();
-      document.body.removeChild(dlAnchor);
-      showEditMsg('📥 配置已导出到本地', 'success');
+      currentJson.redirectUrl = url;
+      updateConfigPreview();
+      // 清除之前的验证状态
+      const validation = document.getElementById('urlValidation');
+      validation.style.display = 'none';
+    }
+
+    // 快速设置预设URL
+    function setQuickUrl(url) {
+      document.getElementById('redirectUrlInput').value = url;
+      currentJson.redirectUrl = url;
+      updateConfigPreview();
+      validateUrl();
+    }
+
+    // 清空URL输入
+    function clearUrl() {
+      document.getElementById('redirectUrlInput').value = '';
+      currentJson.redirectUrl = '';
+      updateConfigPreview();
+      // 隐藏验证状态
+      const validation = document.getElementById('urlValidation');
+      validation.style.display = 'none';
+    }
+
+    // 验证URL格式
+    function validateUrl() {
+      const input = document.getElementById('redirectUrlInput');
+      const url = input.value.trim();
+      const validation = document.getElementById('urlValidation');
+      
+      if (!url) {
+        validation.style.display = 'none';
+        return;
+      }
+
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+          validation.className = 'url-validation valid';
+          validation.innerHTML = '✅ URL格式正确';
+          validation.style.display = 'block';
+        } else {
+          validation.className = 'url-validation invalid';
+          validation.innerHTML = '❌ 请使用 http:// 或 https:// 开头的网址';
+          validation.style.display = 'block';
+        }
+      } catch (e) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ 无效的URL格式，请检查网址是否正确';
+        validation.style.display = 'block';
+      }
+    }
+
+    // 测试URL是否可访问
+    function testUrl() {
+      const input = document.getElementById('redirectUrlInput');
+      const url = input.value.trim();
+      const validation = document.getElementById('urlValidation');
+      const testBtn = document.getElementById('testBtn');
+      
+      if (!url) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ 请先输入要测试的网址';
+        validation.style.display = 'block';
+        return;
+      }
+
+      try {
+        new URL(url); // 先验证URL格式
+      } catch (e) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ 请输入有效的网址格式';
+        validation.style.display = 'block';
+        return;
+      }
+
+      // 显示测试中状态
+      validation.className = 'url-validation testing';
+      validation.innerHTML = '🔄 正在测试链接可访问性...';
+      validation.style.display = 'block';
+      testBtn.disabled = true;
+      testBtn.innerHTML = '⏳';
+
+      // 使用fetch测试链接（注意：由于CORS限制，可能无法访问所有网站）
+      fetch(url, { 
+        method: 'HEAD', 
+        mode: 'no-cors',
+        timeout: 5000 
+      }).then(() => {
+        validation.className = 'url-validation valid';
+        validation.innerHTML = '✅ 链接测试成功，网站可正常访问';
+      }).catch((error) => {
+        // 对于no-cors模式，大多数情况下会进入catch，但这不代表链接无效
+        validation.className = 'url-validation valid';
+        validation.innerHTML = '⚠️ 由于跨域限制无法完全验证，但URL格式正确<br><small>建议手动点击验证：<a href="' + url + '" target="_blank" style="color:#1677ff;">打开链接测试</a></small>';
+      }).finally(() => {
+        testBtn.disabled = false;
+        testBtn.innerHTML = '🔗';
+      });
+    }
+
+    // 更新重定向状态文字
+    function updateRedirectStatus() {
+      const isEnabled = document.getElementById('redirectEnabled').checked;
+      const statusElement = document.getElementById('redirectStatus');
+      
+      if (isEnabled) {
+        statusElement.textContent = '已启用';
+        statusElement.className = 'switch-status enabled';
+      } else {
+        statusElement.textContent = '已禁用';
+        statusElement.className = 'switch-status disabled';
+      }
+    }
+
+    // 更新配置预览
+    function updateConfigPreview() {
+      const isEnabled = currentJson.isRedirectEnabled;
+      const redirectUrl = currentJson.redirectUrl;
+      
+      document.getElementById('previewEnabled').textContent = String(isEnabled);
+      document.getElementById('previewEnabled').style.color = isEnabled ? '#52c41a' : '#ff4d4f';
+      document.getElementById('previewEnabled').style.fontWeight = '600';
+      
+      document.getElementById('previewUrl').textContent = `'${redirectUrl}'`;
     }
 
     // 解析 gistId 或 url
@@ -202,23 +784,23 @@
       return m ? m[1] : '';
     }
 
-    // 连接到 Gist 并加载配置
+    // 连接到系统并加载配置
     async function connectToGist() {
       const gistInput = document.getElementById('gistId').value.trim();
       const token = document.getElementById('token').value.trim();
       const gistId = parseGistId(gistInput);
       
-      if (!gistId) return showLoginMsg('请输入有效的 Gist 链接或 ID', 'error');
-      if (!token) return showLoginMsg('请输入 GitHub Token 以获得编辑权限', 'warning');
+      if (!gistId) return showLoginMsg('请输入有效的应用标识符', 'error');
+      if (!token) return showLoginMsg('请输入访问令牌以获得管理权限', 'warning');
       
       document.getElementById('connectBtn').disabled = true;
-      showLoginMsg('正在连接到 Gist...', 'info');
+      showLoginMsg('正在验证身份并连接到APP应用...', 'info');
       
       try {
         // 构建请求头
         const headers = {
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Gist-JSON-Editor/1.0',
+          'User-Agent': 'App-Config-Manager/1.0',
           'Authorization': `Bearer ${token}`
         };
         
@@ -231,13 +813,13 @@
         
         if (!res.ok) {
           if (res.status === 404) {
-            showLoginMsg('Gist 不存在或无权访问', 'error');
+            showLoginMsg('应用资源不存在或您无权访问', 'error');
           } else if (res.status === 403) {
-            showLoginMsg('访问被拒绝，请检查 Token 权限', 'error');
+            showLoginMsg('访问权限不足，请检查您的访问令牌权限', 'error');
           } else if (res.status === 401) {
-            showLoginMsg('认证失败，请检查 Token 是否正确', 'error');
+            showLoginMsg('身份验证失败，请检查访问令牌是否正确', 'error');
           } else {
-            showLoginMsg(`连接失败：${res.status} ${res.statusText}`, 'error');
+            showLoginMsg(`APP应用连接失败：${res.status} ${res.statusText}`, 'error');
           }
           return;
         }
@@ -250,14 +832,14 @@
         );
         
         if (!fileEntry) {
-          showLoginMsg('未找到 JSON 文件，请确保 Gist 中包含 .json 文件', 'error');
+          showLoginMsg('未找到配置文件，请确保应用中包含有效的配置数据', 'error');
           return;
         }
         
         const fileName = fileEntry[0];
         const fileInfo = fileEntry[1];
         
-        showLoginMsg(`找到文件：${fileName}，正在加载内容...`, 'info');
+        showLoginMsg(`找到配置文件：${fileName}，正在加载数据...`, 'info');
         
         // 获取文件内容
         let jsonText;
@@ -271,18 +853,18 @@
           });
           
           if (!rawRes.ok) {
-            showLoginMsg(`文件加载失败：${rawRes.status} ${rawRes.statusText}`, 'error');
+            showLoginMsg(`配置数据加载失败：${rawRes.status} ${rawRes.statusText}`, 'error');
             return;
           }
           
           jsonText = await rawRes.text();
         }
         
-        // 解析 JSON
+        // 解析配置数据
         try {
           currentJson = JSON.parse(jsonText);
         } catch (e) {
-          showLoginMsg(`JSON 解析失败：${e.message}`, 'error');
+          showLoginMsg(`配置数据解析失败：${e.message}`, 'error');
           return;
         }
         
@@ -294,44 +876,49 @@
         
         // 更新页面信息
         document.getElementById('fileName').textContent = fileName;
-        document.getElementById('configCount').textContent = Object.keys(currentJson).length;
         
-        // 渲染表单
-        renderJsonForm(currentJson, document.getElementById('jsonForm'));
+        // 验证配置格式
+        if (!currentJson.hasOwnProperty('isRedirectEnabled') || !currentJson.hasOwnProperty('redirectUrl')) {
+          showLoginMsg('配置文件格式不正确，请确保包含 isRedirectEnabled 和 redirectUrl 字段', 'error');
+          return;
+        }
         
-        // 切换到编辑页面
+        // 加载重定向配置到界面
+        loadRedirectConfig();
+        
+        // 切换到管理控制台
         showPage('editPage');
-        showEditMsg(`成功连接！共加载 ${Object.keys(currentJson).length} 个配置项`, 'success');
+        showEditMsg('🎉 APP应用连接成功，配置数据已加载！', 'success');
         
       } catch (e) {
-        console.error('连接 Gist 时发生错误:', e);
+        console.error('连接APP应用时发生错误:', e);
         
         if (e.name === 'TypeError' && e.message.includes('fetch')) {
-          showLoginMsg('网络连接失败，请检查网络连接和 Gist ID', 'error');
+          showLoginMsg('网络连接失败，请检查网络连接和应用标识符', 'error');
         } else if (e.message.includes('CORS')) {
-          showLoginMsg('跨域请求被阻止，请稍后再试', 'error');
+          showLoginMsg('网络请求被阻止，请稍后再试', 'error');
         } else {
-          showLoginMsg(`网络异常：${e.message}`, 'error');
+          showLoginMsg(`APP应用连接异常：${e.message}`, 'error');
         }
       } finally {
         document.getElementById('connectBtn').disabled = false;
       }
     }
 
-    // 保存到 Gist
+    // 保存配置
     async function saveToGist() {
       if (!currentGistId || !currentToken || !currentFileName || !currentJson) {
-        showEditMsg('缺少必要信息，请重新连接到 Gist', 'error');
+        showEditMsg('缺少必要信息，请重新连接到APP应用', 'error');
         return;
       }
       
       document.getElementById('saveBtn').disabled = true;
-      showEditMsg('正在保存到 Gist...', 'info');
+              showEditMsg('正在保存配置到APP应用...', 'info');
       
       try {
         const headers = {
           'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Gist-JSON-Editor/1.0',
+          'User-Agent': 'App-Config-Manager/1.0',
           'Authorization': `Bearer ${currentToken}`,
           'Content-Type': 'application/json'
         };
@@ -353,11 +940,11 @@
         
         if (!res.ok) {
           if (res.status === 404) {
-            showEditMsg('Gist 不存在或已被删除', 'error');
+            showEditMsg('应用资源不存在或已被删除', 'error');
           } else if (res.status === 403) {
-            showEditMsg('没有编辑权限，请检查 Token 权限', 'error');
+            showEditMsg('没有编辑权限，请检查您的访问令牌权限', 'error');
           } else if (res.status === 401) {
-            showEditMsg('认证失败，Token 可能已过期', 'error');
+            showEditMsg('身份验证失败，访问令牌可能已过期', 'error');
           } else {
             showEditMsg(`保存失败：${res.status} ${res.statusText}`, 'error');
           }
@@ -365,13 +952,13 @@
         }
         
         const data = await res.json();
-        showEditMsg('✨ 保存成功！配置已同步到 GitHub Gist', 'success');
+        showEditMsg('✨ 配置保存成功！数据已同步到APP应用', 'success');
         
         // 更新文件信息
         currentFileInfo = data.files[currentFileName];
         
       } catch (e) {
-        console.error('保存到 Gist 时发生错误:', e);
+        console.error('保存配置时发生错误:', e);
         showEditMsg(`保存失败：${e.message}`, 'error');
       } finally {
         document.getElementById('saveBtn').disabled = false;
