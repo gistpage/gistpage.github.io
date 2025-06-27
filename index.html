@@ -885,6 +885,20 @@
       document.getElementById('previewUrlText').style.color = '#1d4ed8';
     }
 
+    // 移除JSON中的注释
+    function removeJsonComments(jsonString) {
+      // 移除单行注释 //
+      let cleanJson = jsonString.replace(/\/\/.*$/gm, '');
+      
+      // 移除多行注释 /* */
+      cleanJson = cleanJson.replace(/\/\*[\s\S]*?\*\//g, '');
+      
+      // 移除空行和多余的空白字符
+      cleanJson = cleanJson.replace(/^\s*[\r\n]/gm, '');
+      
+      return cleanJson;
+    }
+
     // 解析 gistId 或 url
     function parseGistId(input) {
       if (!input) return '';
@@ -971,7 +985,9 @@
         
         // 解析配置数据
         try {
-          currentJson = JSON.parse(jsonText);
+          // 清理JSON中的注释（支持 // 和 /* */ 格式）
+          const cleanJsonText = removeJsonComments(jsonText);
+          currentJson = JSON.parse(cleanJsonText);
         } catch (e) {
           showLoginMsg(`配置数据解析失败：${e.message}`, 'error');
           return;
