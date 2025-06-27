@@ -308,6 +308,12 @@
     .config-preview { background: #f8fafc; border-radius: 12px; padding: 1.2em; margin: 1.2em 0; border: 1px solid #e2e8f0; }
     .config-preview h4 { margin: 0 0 0.8em 0; color: #374151; font-size: 1em; font-weight: 600; }
     .config-json { font-family: 'Monaco', 'Menlo', monospace; background: #fff; padding: 0.8em; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.9em; line-height: 1.5; }
+    .config-summary { background: #fff; padding: 0; border-radius: 8px; border: 1px solid #d1d5db; }
+    .summary-item { display: flex; align-items: center; justify-content: space-between; padding: 0.8em 1em; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-item:hover { background-color: #f8fafc; }
+    .summary-label { font-weight: 600; color: #374151; font-size: 0.9em; }
+    .summary-value { font-weight: 600; font-size: 0.9em; }
     .security-notice { 
       background: linear-gradient(135deg, #fef3c7 0%, #fef3c7 100%); 
       border: 1px solid #f59e0b; 
@@ -508,13 +514,26 @@
           <div class="admin-title">
             <h2>🎛️ 应用配置控制台</h2>
             <div class="admin-user">
-              <span>📁 配置文件：<span id="fileName" style="font-weight: 600;"></span></span>
-              <button onclick="backToLogin()" class="admin-btn btn-secondary">退出APP应用</button>
+              <span>🟢 连接状态：<span style="color: #10b981; font-weight: 600;">已连接</span></span>
+              <span style="margin-left: 2em;">📊 App ID：<span id="currentAppId" style="color: #6b7280; font-weight: 600; font-family: monospace;">-</span></span>
             </div>
           </div>
         </div>
         
         <div class="admin-content">
+          <div class="config-panel">
+            <div class="panel-title">⚙️ 应用版本配置</div>
+            
+            <div class="field">
+              <label for="versionInput">应用版本号</label>
+              <input type="number" id="versionInput" placeholder="例如：1" min="1" oninput="updateVersion()" onblur="updateVersion()">
+              <div id="versionValidation" class="url-validation" style="display: none;"></div>
+              <small style="color: #6b7280; margin-top: 0.5em; display: block;">
+                应用的版本标识，只能设置为递增的整数（1, 2, 3...），用于版本管理和兼容性控制
+              </small>
+            </div>
+          </div>
+
           <div class="config-panel">
             <div class="panel-title">🌐 页面重定向管理</div>
             
@@ -533,10 +552,10 @@
             </div>
       
             <div class="field">
-              <label for="redirectUrlInput">目标跳转地址</label>
+              <label for="redirectUrlInput">目标跳转地址 <span style="color: #ef4444;">*</span></label>
               <div class="url-input-container">
-                <input type="url" id="redirectUrlInput" placeholder="输入网址，如：example.com" oninput="updateRedirectUrl()" onblur="validateUrl()">
-                <button type="button" class="clear-url-btn" onclick="clearUrl()" id="clearBtn" title="清空输入">🗑️</button>
+                <input type="url" id="redirectUrlInput" placeholder="输入网址，如：example.com" oninput="updateRedirectUrl()" onblur="validateUrl()" required>
+                <button type="button" class="clear-url-btn" onclick="clearUrl()" id="clearBtn" title="重置为默认地址">🔄</button>
                 <button type="button" class="test-url-btn" onclick="testUrl()" id="testBtn" title="测试链接">🔗</button>
               </div>
               <div id="urlValidation" class="url-validation" style="display: none;"></div>
@@ -558,16 +577,26 @@
               </div>
               
               <small style="color: #6b7280; margin-top: 1em; display: block;">
-                💡 提示：支持任何有效的网址，系统会自动验证链接的可访问性
+                💡 提示：此字段为必填项，支持任何有效的网址，系统会自动验证链接的可访问性
               </small>
             </div>
           </div>
       
           <div class="config-preview">
-            <h4>📋 当前配置状态</h4>
-            <div class="config-json">
-              <div>isRedirectEnabled: <span id="previewEnabled" style="color: #059669; font-weight: 600;">true</span></div>
-              <div>redirectUrl: <span id="previewUrl" style="color: #1e40af; font-weight: 600;">'https://flutter.dev/'</span></div>
+            <h4>📋 配置概览</h4>
+            <div class="config-summary">
+              <div class="summary-item">
+                <span class="summary-label">📦 应用版本：</span>
+                <span id="previewVersionText" class="summary-value" style="color: #9333ea;">第 1 版</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">🔄 重定向功能：</span>
+                <span id="previewEnabledText" class="summary-value" style="color: #ef4444;">已关闭</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">🎯 跳转目标：</span>
+                <span id="previewUrlText" class="summary-value" style="color: #1d4ed8;">https://example.com</span>
+              </div>
             </div>
           </div>
           
@@ -602,29 +631,84 @@
       currentToken = null;
       currentFileName = null;
       currentFileInfo = null;
+      
+      // 清除App ID显示
+      document.getElementById('currentAppId').textContent = '-';
+      
       showPage('loginPage');
       showLoginMsg('请输入应用凭据以访问配置管理控制台', 'info');
     }
 
-    // 加载重定向配置到界面
+    // 加载配置到界面
     function loadRedirectConfig() {
       if (!currentJson) return;
       
+      const version = currentJson.version || '1';
       const isEnabled = currentJson.isRedirectEnabled || false;
-      const redirectUrl = currentJson.redirectUrl || '';
+      let redirectUrl = currentJson.redirectUrl;
+      
+      // 如果redirectUrl为null或空，设置默认值
+      if (!redirectUrl || redirectUrl === null) {
+        redirectUrl = 'https://example.com';
+        currentJson.redirectUrl = redirectUrl;
+      }
       
       // 更新界面元素
+      document.getElementById('versionInput').value = parseInt(version);
       document.getElementById('redirectEnabled').checked = isEnabled;
       document.getElementById('redirectUrlInput').value = redirectUrl;
+      
+      // 清除验证信息
+      const versionValidation = document.getElementById('versionValidation');
+      const urlValidation = document.getElementById('urlValidation');
+      versionValidation.style.display = 'none';
+      urlValidation.style.display = 'none';
       
       // 更新状态文字和预览
       updateRedirectStatus();
       updateConfigPreview();
       
       // 自动验证加载的URL
-      if (redirectUrl) {
-        validateUrl();
+      validateUrl();
+    }
+
+    // 更新版本信息
+    function updateVersion() {
+      const input = document.getElementById('versionInput');
+      const validation = document.getElementById('versionValidation');
+      let newVersion = parseInt(input.value);
+      
+      // 获取当前版本号
+      const currentVersion = parseInt(currentJson.version) || 0;
+      
+      // 版本号验证
+      if (!newVersion || newVersion < 1) {
+        newVersion = Math.max(1, currentVersion);
+        input.value = newVersion;
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ 版本号必须是大于0的整数';
+        validation.style.display = 'block';
+      } else if (newVersion < currentVersion) {
+        // 版本号不能递减
+        input.value = currentVersion;
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = `❌ 版本号只能递增，当前版本为 ${currentVersion}，请输入大于等于 ${currentVersion} 的版本号`;
+        validation.style.display = 'block';
+        return;
+      } else if (newVersion === currentVersion) {
+        // 版本号相同
+        validation.className = 'url-validation info';
+        validation.innerHTML = `ℹ️ 版本号保持不变：${newVersion}`;
+        validation.style.display = 'block';
+      } else {
+        // 版本号递增
+        validation.className = 'url-validation valid';
+        validation.innerHTML = `✅ 版本号从 ${currentVersion} 升级到 ${newVersion}`;
+        validation.style.display = 'block';
       }
+      
+      currentJson.version = String(newVersion);
+      updateConfigPreview();
     }
 
     // 更新重定向启用状态
@@ -637,10 +721,19 @@
 
     // 更新重定向URL
     function updateRedirectUrl() {
-      let url = document.getElementById('redirectUrlInput').value;
+      let url = document.getElementById('redirectUrlInput').value.trim();
+      const validation = document.getElementById('urlValidation');
+      
+      // URL不能为空
+      if (!url) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ 目标跳转地址不能为空，请输入有效的网址';
+        validation.style.display = 'block';
+        return;
+      }
       
       // 自动添加 https:// 前缀（如果用户输入的是纯域名）
-      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
         // 检查是否看起来像域名（包含点号但不是文件路径）
         if (url.includes('.') && !url.startsWith('/') && !url.includes(' ')) {
           url = 'https://' + url;
@@ -650,8 +743,7 @@
       
       currentJson.redirectUrl = url;
       updateConfigPreview();
-      // 清除之前的验证状态
-      const validation = document.getElementById('urlValidation');
+      // 隐藏验证状态，等待格式验证
       validation.style.display = 'none';
     }
 
@@ -663,14 +755,18 @@
       validateUrl();
     }
 
-    // 清空URL输入
+    // 重置URL为默认地址
     function clearUrl() {
-      document.getElementById('redirectUrlInput').value = '';
-      currentJson.redirectUrl = '';
+      const defaultUrl = 'https://example.com';
+      document.getElementById('redirectUrlInput').value = defaultUrl;
+      currentJson.redirectUrl = defaultUrl;
       updateConfigPreview();
-      // 隐藏验证状态
+      validateUrl();
+      // 显示重置提示
       const validation = document.getElementById('urlValidation');
-      validation.style.display = 'none';
+      validation.className = 'url-validation info';
+      validation.innerHTML = '🔄 已重置为默认地址';
+      validation.style.display = 'block';
     }
 
     // 验证URL格式
@@ -680,8 +776,10 @@
       const validation = document.getElementById('urlValidation');
       
       if (!url) {
-        validation.style.display = 'none';
-        return;
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ 目标跳转地址不能为空，请输入有效的网址';
+        validation.style.display = 'block';
+        return false;
       }
 
       try {
@@ -690,15 +788,18 @@
           validation.className = 'url-validation valid';
           validation.innerHTML = '✅ URL格式正确';
           validation.style.display = 'block';
+          return true;
         } else {
           validation.className = 'url-validation invalid';
           validation.innerHTML = '❌ 请使用 http:// 或 https:// 开头的网址';
           validation.style.display = 'block';
+          return false;
         }
       } catch (e) {
         validation.className = 'url-validation invalid';
         validation.innerHTML = '❌ 无效的URL格式，请检查网址是否正确';
         validation.style.display = 'block';
+        return false;
       }
     }
 
@@ -766,14 +867,22 @@
 
     // 更新配置预览
     function updateConfigPreview() {
+      const version = currentJson.version || '1';
       const isEnabled = currentJson.isRedirectEnabled;
-      const redirectUrl = currentJson.redirectUrl;
+      const redirectUrl = currentJson.redirectUrl || 'https://example.com';
       
-      document.getElementById('previewEnabled').textContent = String(isEnabled);
-      document.getElementById('previewEnabled').style.color = isEnabled ? '#52c41a' : '#ff4d4f';
-      document.getElementById('previewEnabled').style.fontWeight = '600';
+      // 更新版本显示
+      document.getElementById('previewVersionText').textContent = `第 ${version} 版`;
+      document.getElementById('previewVersionText').style.color = '#9333ea';
       
-      document.getElementById('previewUrl').textContent = `'${redirectUrl}'`;
+      // 更新重定向状态显示
+      const enabledText = isEnabled ? '已开启' : '已关闭';
+      document.getElementById('previewEnabledText').textContent = enabledText;
+      document.getElementById('previewEnabledText').style.color = isEnabled ? '#10b981' : '#ef4444';
+      
+      // 更新跳转目标显示
+      document.getElementById('previewUrlText').textContent = redirectUrl;
+      document.getElementById('previewUrlText').style.color = '#1d4ed8';
     }
 
     // 解析 gistId 或 url
@@ -839,7 +948,7 @@
         const fileName = fileEntry[0];
         const fileInfo = fileEntry[1];
         
-        showLoginMsg(`找到配置文件：${fileName}，正在加载数据...`, 'info');
+        showLoginMsg('正在加载应用配置数据...', 'info');
         
         // 获取文件内容
         let jsonText;
@@ -874,17 +983,25 @@
         currentFileName = fileName;
         currentFileInfo = fileInfo;
         
-        // 更新页面信息
-        document.getElementById('fileName').textContent = fileName;
+        // 保存文件信息（用于后续操作）
         
-        // 验证配置格式
-        if (!currentJson.hasOwnProperty('isRedirectEnabled') || !currentJson.hasOwnProperty('redirectUrl')) {
-          showLoginMsg('配置文件格式不正确，请确保包含 isRedirectEnabled 和 redirectUrl 字段', 'error');
-          return;
+        // 验证配置格式并初始化缺失字段
+        if (!currentJson.hasOwnProperty('version')) {
+          currentJson.version = '1';
+        }
+        if (!currentJson.hasOwnProperty('isRedirectEnabled')) {
+          currentJson.isRedirectEnabled = false;
+        }
+        if (!currentJson.hasOwnProperty('redirectUrl') || !currentJson.redirectUrl) {
+          currentJson.redirectUrl = 'https://example.com';
         }
         
-        // 加载重定向配置到界面
+        // 加载配置到界面
         loadRedirectConfig();
+        
+        // 更新App ID显示
+        const displayAppId = gistId.length > 8 ? gistId.substring(0, 8) + '...' : gistId;
+        document.getElementById('currentAppId').textContent = displayAppId;
         
         // 切换到管理控制台
         showPage('editPage');
@@ -912,8 +1029,22 @@
         return;
       }
       
+      // 验证必填字段
+      if (!currentJson.redirectUrl || currentJson.redirectUrl.trim() === '') {
+        showEditMsg('❌ 目标跳转地址不能为空，请填写有效的网址', 'error');
+        // 聚焦到URL输入框
+        document.getElementById('redirectUrlInput').focus();
+        return;
+      }
+      
+      // 验证URL格式
+      if (!validateUrl()) {
+        showEditMsg('❌ 请修正目标跳转地址的格式错误后再保存', 'error');
+        return;
+      }
+      
       document.getElementById('saveBtn').disabled = true;
-              showEditMsg('正在保存配置到APP应用...', 'info');
+      showEditMsg('正在保存配置到APP应用...', 'info');
       
       try {
         const headers = {
