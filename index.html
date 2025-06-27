@@ -1453,7 +1453,7 @@
         
         // 切换到管理控制台
         showPage('editPage');
-        showEditMsg('🎉 APP应用连接成功，配置数据已加载！', 'success');
+        showTopNotification('🎉 APP应用连接成功，配置数据已加载！', 'success');
         
       } catch (e) {
         console.error('连接APP应用时发生错误:', e);
@@ -1565,9 +1565,8 @@
         }
         
         const data = await res.json();
-        showEditMsg('🎉 保存成功！配置已安全同步到您的APP应用', 'success');
         
-        // 额外显示顶部通知
+        // 显示顶部通知
         showTopNotification('🎊 太棒了！配置已成功保存并同步完成', 'success');
         
         // 给保存按钮添加成功反馈效果
