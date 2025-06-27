@@ -1046,43 +1046,70 @@
       document.getElementById('previewUrlText').style.color = '#1d4ed8';
     }
 
-    // 移除JSON中的注释和有害控制字符
+    // 保守的JSON注释清理（仅处理注释，不动其他字符）
     function removeJsonComments(jsonString) {
-      // 移除单行注释 //
-      let cleanJson = jsonString.replace(/\/\/.*$/gm, '');
+      console.log('清理前JSON:', jsonString);
       
-      // 移除多行注释 /* */
-      cleanJson = cleanJson.replace(/\/\*[\s\S]*?\*\//g, '');
+      // 最保守的方法：使用正则表达式精确清理注释
+      let cleanJson = jsonString;
       
-      // 修复可能的编码问题 - 移除BOM标记
+      // 移除BOM标记
       cleanJson = cleanJson.replace(/^\uFEFF/, '');
       
-      // 使用更安全的逐字符检查方法
-      let result = '';
-      for (let i = 0; i < cleanJson.length; i++) {
-        const char = cleanJson[i];
-        const code = char.charCodeAt(0);
+      // 分行处理，逐行移除注释
+      const lines = cleanJson.split('\n');
+      const cleanedLines = lines.map(line => {
+        // 查找 // 注释，但要避免在字符串内的 //
+        let inString = false;
+        let escapeNext = false;
+        let result = '';
         
-        // 保留以下字符：
-        // - 可打印ASCII字符 (32-126)
-        // - 制表符 (9)
-        // - 换行符 (10)
-        // - 回车符 (13)
-        // - 扩展ASCII字符 (128-255)
-        if ((code >= 32 && code <= 126) || 
-            code === 9 || code === 10 || code === 13 || 
-            (code >= 128 && code <= 255)) {
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          
+          if (escapeNext) {
+            result += char;
+            escapeNext = false;
+            continue;
+          }
+          
+          if (char === '\\' && inString) {
+            result += char;
+            escapeNext = true;
+            continue;
+          }
+          
+          if (char === '"' && !escapeNext) {
+            inString = !inString;
+            result += char;
+            continue;
+          }
+          
+          // 如果不在字符串内，检查是否是注释开始
+          if (!inString && char === '/' && i + 1 < line.length && line[i + 1] === '/') {
+            // 找到注释，截断到这里
+            break;
+          }
+          
           result += char;
-        } else {
-          // 记录被跳过的字符用于调试
-          console.warn(`跳过控制字符: 位置${i}, 编码${code}, 字符"${char}"`);
         }
-      }
+        
+        return result.trimEnd(); // 移除行尾空白
+      });
       
-      // 清理多余的空白行
-      result = result.replace(/^\s*[\r\n]/gm, '');
+      // 重新连接行
+      cleanJson = cleanedLines.join('\n');
       
-      return result.trim();
+      // 移除多行注释 /* */（简单版本，不处理字符串内的情况）
+      cleanJson = cleanJson.replace(/\/\*[\s\S]*?\*\//g, '');
+      
+      // 移除空行
+      cleanJson = cleanJson.replace(/^\s*[\r\n]/gm, '');
+      
+      const result = cleanJson.trim();
+      console.log('清理后JSON:', result);
+      
+      return result;
     }
 
     // 解析 gistId 或 url
