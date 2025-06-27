@@ -1082,6 +1082,34 @@
       validation.style.display = 'block';
     }
 
+    // 严格验证URL格式的辅助函数
+    function validateUrlStrict(url) {
+      if (!url || typeof url !== 'string') return false;
+      
+      url = url.trim();
+      if (!url) return false;
+
+      // 检查是否包含空格
+      if (url.includes(' ')) return false;
+
+      // 检查是否包含中文或其他无效字符
+      if (/[\u4e00-\u9fff]/.test(url)) return false;
+
+      // 检查是否包含其他无效字符（基本的 ASCII 字符检查）
+      if (!/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/.test(url)) return false;
+
+      // 使用正则表达式进行更严格的URL格式验证
+      const urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+      if (!urlRegex.test(url)) return false;
+
+      try {
+        const urlObj = new URL(url);
+        return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+      } catch (e) {
+        return false;
+      }
+    }
+
     // 验证URL格式
     function validateUrl() {
       const input = document.getElementById('redirectUrlInput');
@@ -1095,20 +1123,46 @@
         return false;
       }
 
-      try {
-        const urlObj = new URL(url);
-        if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
-          validation.className = 'url-validation valid';
-          validation.innerHTML = '✅ URL格式正确';
-          validation.style.display = 'block';
-          return true;
-        } else {
-          validation.className = 'url-validation invalid';
-          validation.innerHTML = '❌ 请使用 http:// 或 https:// 开头的网址';
-          validation.style.display = 'block';
-          return false;
-        }
-      } catch (e) {
+      // 检查是否包含空格
+      if (url.includes(' ')) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ URL中不能包含空格，请检查网址';
+        validation.style.display = 'block';
+        return false;
+      }
+
+      // 检查是否包含中文或其他无效字符
+      if (/[\u4e00-\u9fff]/.test(url)) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ URL中不能包含中文字符，请使用英文网址';
+        validation.style.display = 'block';
+        return false;
+      }
+
+      // 检查是否包含其他无效字符
+      if (!/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/.test(url)) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ URL包含无效字符，请检查网址格式';
+        validation.style.display = 'block';
+        return false;
+      }
+
+      // 使用正则表达式进行更严格的URL格式验证
+      const urlRegex = /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+      if (!urlRegex.test(url)) {
+        validation.className = 'url-validation invalid';
+        validation.innerHTML = '❌ 无效的URL格式，请检查网址是否正确';
+        validation.style.display = 'block';
+        return false;
+      }
+
+      // 最终验证
+      if (validateUrlStrict(url)) {
+        validation.className = 'url-validation valid';
+        validation.innerHTML = '✅ URL格式正确';
+        validation.style.display = 'block';
+        return true;
+      } else {
         validation.className = 'url-validation invalid';
         validation.innerHTML = '❌ 无效的URL格式，请检查网址是否正确';
         validation.style.display = 'block';
@@ -1130,9 +1184,8 @@
         return;
       }
 
-      try {
-        new URL(url); // 先验证URL格式
-      } catch (e) {
+      // 使用相同的严格校验逻辑
+      if (!validateUrlStrict(url)) {
         validation.className = 'url-validation invalid';
         validation.innerHTML = '❌ 请输入有效的网址格式';
         validation.style.display = 'block';
@@ -1552,6 +1605,9 @@
         });
         
         if (!res.ok) {
+          // 清除保存中的消息
+          document.getElementById('editMsg').style.display = 'none';
+          
           if (res.status === 404) {
             showEditMsg('应用资源不存在或已被删除', 'error');
           } else if (res.status === 403) {
@@ -1565,6 +1621,9 @@
         }
         
         const data = await res.json();
+        
+        // 清除保存中的消息
+        document.getElementById('editMsg').style.display = 'none';
         
         // 显示顶部通知
         showTopNotification('🎊 太棒了！配置已成功保存并同步完成', 'success');
@@ -1589,6 +1648,8 @@
         
       } catch (e) {
         console.error('保存配置时发生错误:', e);
+        // 清除保存中的消息
+        document.getElementById('editMsg').style.display = 'none';
         showEditMsg(`保存失败：${e.message}`, 'error');
       } finally {
         document.getElementById('saveBtn').disabled = false;
