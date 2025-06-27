@@ -30,18 +30,27 @@
     }
     
     /* 管理页面的美化滚动条 */
+    #editPage .admin-content {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+    }
     #editPage .admin-content::-webkit-scrollbar {
       width: 6px;
     }
     #editPage .admin-content::-webkit-scrollbar-track {
       background: transparent;
+      border-radius: 3px;
     }
     #editPage .admin-content::-webkit-scrollbar-thumb {
       background: rgba(102, 126, 234, 0.3);
       border-radius: 3px;
+      min-height: 20px;
     }
     #editPage .admin-content::-webkit-scrollbar-thumb:hover {
       background: rgba(102, 126, 234, 0.5);
+    }
+    #editPage .admin-content::-webkit-scrollbar-corner {
+      background: transparent;
     }
     body::before {
       content: '';
@@ -86,6 +95,7 @@
       min-height: 100vh; 
       display: flex; 
       flex-direction: column; 
+      padding-bottom: 0;
     }
     .login-card { 
       background: rgba(255, 255, 255, 0.95); 
@@ -102,10 +112,10 @@
       flex-direction: column;
       justify-content: space-between;
     }
-    .admin-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 1.2em 2em; flex-shrink: 0; }
-    .admin-content { padding: 1.5em 2em; flex: 1; overflow-y: auto; }
-    .field { margin-bottom: 1.2em; }
-    .field:last-of-type { margin-bottom: 1.5em; }
+    .admin-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 1em 2em; flex-shrink: 0; }
+    .admin-content { padding: 1em 2em 1.5em 2em; flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+    .field { margin-bottom: 0.8em; }
+    .field:last-of-type { margin-bottom: 1em; }
     label { 
       display: block; 
       margin-bottom: 0.5em; 
@@ -116,7 +126,7 @@
     }
     input { 
       width: 100%; 
-      padding: 0.8em 1em; 
+      padding: 0.7em 1em; 
       font-size: 1em; 
       border-radius: 10px; 
       border: 2px solid #e5e7eb; 
@@ -181,7 +191,7 @@
     .login-btn:disabled::before {
       display: none;
     }
-    .admin-btn { padding: 0.6em 1.2em; font-size: 0.9em; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .admin-btn { padding: 0.5em 1.2em; font-size: 0.9em; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; }
     .btn-primary { background: #667eea; color: #fff; }
     .btn-primary:hover { background: #5a67d8; }
     .btn-success { background: #10b981; color: #fff; }
@@ -218,11 +228,11 @@
     .admin-title { display: flex; align-items: center; justify-content: space-between; }
     .admin-title h2 { margin: 0; color: #1f2937; font-size: 1.4em; font-weight: 600; }
     .admin-user { display: flex; align-items: center; gap: 0.5em; color: #6b7280; font-size: 0.9em; }
-    .config-panel { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.2em; margin-bottom: 1.2em; }
-    .panel-title { font-size: 1.1em; font-weight: 600; color: #1f2937; margin-bottom: 0.8em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.4em; }
+    .config-panel { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1em; margin-bottom: 0.8em; }
+    .panel-title { font-size: 1.1em; font-weight: 600; color: #1f2937; margin-bottom: 0.6em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.3em; }
     
     /* 开关样式 */
-    .switch-container { display: flex; align-items: center; gap: 1em; margin: 0.8em 0; }
+    .switch-container { display: flex; align-items: center; gap: 1em; margin: 0.5em 0; }
     .switch { position: relative; display: inline-block; width: 60px; height: 32px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 32px; }
@@ -250,8 +260,8 @@
     .url-validation.invalid { background: #fef2f2; color: #991b1b; border-left-color: #ef4444; }
     .url-validation.testing { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
     
-    .quick-urls { margin-top: 1em; padding: 1.2em; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; }
-    .url-buttons { display: flex; flex-wrap: wrap; gap: 0.5em; }
+    .quick-urls { margin-top: 0.8em; padding: 1em; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .url-buttons { display: flex; flex-wrap: wrap; gap: 0.4em; }
     .quick-url-btn { padding: 0.4em 0.8em; background: #fff; border: 1px solid #d1d5db; border-radius: 6px; cursor: pointer; font-size: 0.8em; transition: all 0.2s; color: #374151; font-weight: 500; }
     .quick-url-btn:hover { border-color: #667eea; color: #667eea; background: #f8faff; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .quick-url-btn:active { transform: translateY(0); }
@@ -283,7 +293,7 @@
       .system-logo { font-size: 1.8em; }
       .system-title { font-size: 1.3em; }
       .system-desc { font-size: 0.9em; }
-      .field { margin-bottom: 1em; }
+    .field { margin-bottom: 1em; }
       .field:last-of-type { margin-bottom: 1.2em; }
       input { 
         padding: 0.7em 0.9em; 
@@ -316,17 +326,60 @@
     .msg.warning { background: #fffbeb; color: #92400e; border-left-color: #f59e0b; }
     .page { display: none; }
     .page.active { display: block; }
-    .button-group { display: flex; gap: 1em; margin-top: 1.5em; }
+    .button-group { display: flex; gap: 1em; margin-top: 1em; }
     .button-group .admin-btn { flex: 1; }
-    .config-preview { background: #f8fafc; border-radius: 12px; padding: 1.2em; margin: 1.2em 0; border: 1px solid #e2e8f0; }
-    .config-preview h4 { margin: 0 0 0.8em 0; color: #374151; font-size: 1em; font-weight: 600; }
+    .config-preview { background: #f8fafc; border-radius: 12px; padding: 1em; margin: 0.8em 0; border: 1px solid #e2e8f0; }
+    .config-preview h4 { margin: 0 0 0.6em 0; color: #374151; font-size: 1em; font-weight: 600; }
     .config-json { font-family: 'Monaco', 'Menlo', monospace; background: #fff; padding: 0.8em; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.9em; line-height: 1.5; }
     .config-summary { background: #fff; padding: 0; border-radius: 8px; border: 1px solid #d1d5db; }
-    .summary-item { display: flex; align-items: center; justify-content: space-between; padding: 0.8em 1em; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
+    .summary-item { display: flex; align-items: center; justify-content: space-between; padding: 0.6em 1em; border-bottom: 1px solid #f3f4f6; transition: background-color 0.2s ease; }
     .summary-item:last-child { border-bottom: none; }
     .summary-item:hover { background-color: #f8fafc; }
     .summary-label { font-weight: 600; color: #374151; font-size: 0.9em; }
     .summary-value { font-weight: 600; font-size: 0.9em; }
+    
+    /* 配置读取机制样式 */
+    .config-mechanism { background: #f1f5f9; border-radius: 12px; padding: 0; margin: 0.8em 0; border: 1px solid #cbd5e1; overflow: hidden; }
+    .mechanism-header { display: flex; align-items: center; justify-content: space-between; padding: 1em; cursor: pointer; transition: all 0.2s ease; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-bottom: 1px solid #cbd5e1; }
+    .mechanism-header:hover { background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); }
+    .mechanism-header h4 { margin: 0; color: #374151; font-size: 1em; font-weight: 600; }
+    .mechanism-toggle { font-size: 0.8em; color: #6b7280; font-weight: 600; transition: transform 0.3s ease; }
+    .mechanism-toggle.expanded { transform: rotate(180deg); }
+    .mechanism-content { background: #fff; padding: 1em; animation: slideDown 0.3s ease-out; }
+    .mechanism-section { margin-bottom: 1em; }
+    .mechanism-section:last-child { margin-bottom: 0; }
+    .mechanism-section h5 { margin: 0 0 0.6em 0; color: #1f2937; font-size: 0.95em; font-weight: 600; padding-bottom: 0.3em; border-bottom: 1px solid #e5e7eb; }
+    .mechanism-items { display: flex; flex-direction: column; gap: 0.4em; }
+    .mechanism-item { display: flex; align-items: center; padding: 0.5em 0; }
+    .item-label { font-weight: 500; color: #4b5563; font-size: 0.85em; min-width: 140px; }
+    .item-value { font-weight: 600; color: #1f2937; font-size: 0.85em; background: #f8fafc; padding: 0.2em 0.6em; border-radius: 4px; }
+    
+    /* 流程图样式 */
+    .flow-diagram { display: flex; flex-direction: column; align-items: center; gap: 0.5em; padding: 0.8em; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
+    .flow-step { background: #3b82f6; color: #fff; padding: 0.5em 1em; border-radius: 6px; font-size: 0.85em; font-weight: 600; text-align: center; }
+    .flow-arrow { color: #6b7280; font-size: 1.2em; font-weight: 600; }
+    .flow-branch { width: 100%; }
+    .flow-path { display: flex; align-items: center; justify-content: center; gap: 0.6em; padding: 0.3em; }
+    .flow-condition { background: #fbbf24; color: #92400e; padding: 0.3em 0.6em; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+    .flow-arrow-right { color: #6b7280; font-size: 1em; font-weight: 600; }
+    .flow-result { background: #10b981; color: #fff; padding: 0.3em 0.6em; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+    
+    /* 展开动画 */
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      .mechanism-header { padding: 0.8em; }
+      .mechanism-header h4 { font-size: 0.9em; }
+      .mechanism-content { padding: 0.8em; }
+      .flow-path { flex-direction: column; gap: 0.3em; text-align: center; }
+      .flow-arrow-right { transform: rotate(90deg); }
+      .item-label { min-width: auto; margin-bottom: 0.2em; }
+      .mechanism-item { flex-direction: column; align-items: flex-start; padding: 0.4em 0; }
+    }
     .security-notice { 
       background: linear-gradient(135deg, #fef3c7 0%, #fef3c7 100%); 
       border: 1px solid #f59e0b; 
@@ -502,7 +555,7 @@
             <input id="gistId" placeholder="请输入您的应用标识符" autocomplete="off">
           </div>
           
-          <div class="field">
+    <div class="field">
             <label for="token">访问令牌</label>
             <input id="token" type="password" placeholder="请输入您的访问令牌" autocomplete="off">
           </div>
@@ -564,7 +617,7 @@
               </small>
             </div>
       
-            <div class="field">
+    <div class="field">
               <label for="redirectUrlInput">目标跳转地址 <span style="color: #ef4444;">*</span></label>
               <div class="url-input-container">
                 <input type="url" id="redirectUrlInput" placeholder="输入网址，如：example.com" oninput="updateRedirectUrl()" onblur="validateUrl()" required>
@@ -612,6 +665,85 @@
               </div>
             </div>
           </div>
+
+          <div class="config-mechanism">
+            <div class="mechanism-header" onclick="toggleConfigMechanism()">
+              <h4>📖 配置读取机制</h4>
+              <span id="mechanismToggle" class="mechanism-toggle">▼</span>
+            </div>
+            <div id="mechanismContent" class="mechanism-content" style="display: none;">
+              <div class="mechanism-section">
+                <h5>🔄 读取时机</h5>
+                <div class="mechanism-items">
+                  <div class="mechanism-item">
+                    <span class="item-label">应用启动:</span>
+                    <span class="item-value">立即检查</span>
+                  </div>
+                  <div class="mechanism-item">
+                    <span class="item-label">恢复前台:</span>
+                    <span class="item-value">立即检查</span>
+                  </div>
+                  <div class="mechanism-item">
+                    <span class="item-label">定时检查:</span>
+                    <span class="item-value">前台2分钟间隔</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mechanism-section">
+                <h5>🔍 版本号比较机制</h5>
+                <div class="mechanism-items">
+                  <div class="mechanism-item">
+                    <span class="item-label">获取本地版本号:</span>
+                    <span class="item-value">从缓存读取</span>
+                  </div>
+                  <div class="mechanism-item">
+                    <span class="item-label">轻量级检查远程版本:</span>
+                    <span class="item-value">使用ETag优化</span>
+                  </div>
+                  <div class="mechanism-item">
+                    <span class="item-label">版本号对比:</span>
+                    <span class="item-value">不同则触发更新</span>
+                  </div>
+                  <div class="mechanism-item">
+                    <span class="item-label">完整配置下载:</span>
+                    <span class="item-value">仅在版本变化时</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mechanism-section">
+                <h5>📊 读取流程</h5>
+                <div class="flow-diagram">
+                  <div class="flow-step">本地版本 vs 远程版本</div>
+                  <div class="flow-arrow">↓</div>
+                  <div class="flow-branch">
+                    <div class="flow-path">
+                      <span class="flow-condition">版本相同</span>
+                      <span class="flow-arrow-right">→</span>
+                      <span class="flow-result">使用缓存</span>
+                    </div>
+                  </div>
+                  <div class="flow-arrow">↓</div>
+                  <div class="flow-branch">
+                    <div class="flow-path">
+                      <span class="flow-condition">版本不同</span>
+                      <span class="flow-arrow-right">→</span>
+                      <span class="flow-result">下载新配置</span>
+                    </div>
+                  </div>
+                  <div class="flow-arrow">↓</div>
+                  <div class="flow-branch">
+                    <div class="flow-path">
+                      <span class="flow-condition">网络失败</span>
+                      <span class="flow-arrow-right">→</span>
+                      <span class="flow-result">使用缓存/默认</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="button-group">
             <button onclick="saveToGist()" id="saveBtn" class="admin-btn btn-success">💾 保存配置</button>
@@ -635,6 +767,22 @@
     function showPage(pageId) {
       document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
       document.getElementById(pageId).classList.add('active');
+    }
+
+    // 配置读取机制展开/折叠
+    function toggleConfigMechanism() {
+      const content = document.getElementById('mechanismContent');
+      const toggle = document.getElementById('mechanismToggle');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = '▲';
+        toggle.classList.add('expanded');
+      } else {
+        content.style.display = 'none';
+        toggle.textContent = '▼';
+        toggle.classList.remove('expanded');
+      }
     }
 
     // 返回登录页面
@@ -713,7 +861,7 @@
         validation.className = 'url-validation info';
         validation.innerHTML = `ℹ️ 版本号保持不变：${newVersion}`;
         validation.style.display = 'block';
-      } else {
+            } else {
         // 版本号递增
         validation.className = 'url-validation valid';
         validation.innerHTML = `✅ 版本号从 ${currentVersion} 升级到 ${newVersion}`;
@@ -988,9 +1136,9 @@
             mode: 'cors'
           });
           
-          if (!rawRes.ok) {
+        if (!rawRes.ok) {
             showLoginMsg(`配置数据加载失败：${rawRes.status} ${rawRes.statusText}`, 'error');
-            return;
+          return;
           }
           
           jsonText = await rawRes.text();
