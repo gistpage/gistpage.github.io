@@ -13,11 +13,73 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%); 
       min-height: 100vh; 
       position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* 顶部通知样式 */
+    .top-notification {
+      position: fixed;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 1em 2em;
+      border-radius: 0 0 16px 16px;
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+      font-weight: 600;
+      font-size: 1.1em;
+      z-index: 10000;
+      min-width: 300px;
+      text-align: center;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    .top-notification.show {
+      top: 0;
+      animation: slideDownPulse 0.6s ease-out;
+    }
+    
+    .top-notification::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    
+    @keyframes slideDownPulse {
+      0% { 
+        top: -100px; 
+        transform: translateX(-50%) scale(0.8); 
+        opacity: 0; 
+      }
+      50% { 
+        top: 10px; 
+        transform: translateX(-50%) scale(1.05); 
+        opacity: 1; 
+      }
+      100% { 
+        top: 0; 
+        transform: translateX(-50%) scale(1); 
+        opacity: 1; 
+      }
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
     }
     
     /* 登录页面隐藏滚动条，管理页面允许滚动 */
     html, body {
       height: 100%;
+      overflow-x: hidden;
     }
     /* 登录页面隐藏滚动条 */
     #loginPage::-webkit-scrollbar {
@@ -71,7 +133,7 @@
     }
     body::after {
       content: '';
-      position: absolute;
+      position: fixed;
       top: -50%;
       left: -50%;
       width: 200%;
@@ -79,6 +141,7 @@
       background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
       animation: backgroundMove 15s ease-in-out infinite;
       pointer-events: none;
+      z-index: -1;
     }
     @keyframes backgroundMove {
       0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(0deg); }
@@ -239,6 +302,20 @@
     .config-panel { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1em; margin-bottom: 0.8em; }
     .panel-title { font-size: 1.1em; font-weight: 600; color: #1f2937; margin-bottom: 0.6em; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.3em; }
     
+    /* 版本管理区域样式调整 */
+    .version-mechanism { 
+      background: #f8fafc; 
+      border: 1px solid #e2e8f0; 
+      margin-bottom: 0.8em; 
+    }
+    .version-mechanism .mechanism-header { 
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+    }
+    .version-mechanism .mechanism-header h4 { 
+      color: #6b7280; 
+      font-size: 0.95em; 
+    }
+    
     /* 开关样式 */
     .switch-container { display: flex; align-items: center; gap: 1em; margin: 0.5em 0; }
     .switch { position: relative; display: inline-block; width: 60px; height: 32px; }
@@ -264,9 +341,10 @@
     .clear-url-btn:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
     
     .url-validation { margin-top: 0.6em; padding: 0.6em; border-radius: 8px; font-size: 0.9em; border-left: 4px solid; }
-    .url-validation.valid { background: #ecfdf5; color: #065f46; border-left-color: #10b981; }
+    .url-validation.valid { background: #f8fafc; color: #374151; border-left-color: #94a3b8; }
     .url-validation.invalid { background: #fef2f2; color: #991b1b; border-left-color: #ef4444; }
     .url-validation.testing { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
+    .url-validation.info { background: #f8fafc; color: #6b7280; border-left-color: #d1d5db; }
     
     .quick-urls { margin-top: 0.8em; padding: 1em; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; }
     .url-buttons { display: flex; flex-wrap: wrap; gap: 0.4em; }
@@ -327,11 +405,29 @@
       }
     }
     
-    .msg { margin: 0.8em 0; padding: 0.7em; border-radius: 8px; font-weight: 500; border-left: 4px solid; }
-    .msg.success { background: #ecfdf5; color: #065f46; border-left-color: #10b981; }
+    .msg { margin: 0.8em 0; padding: 0.7em; border-radius: 8px; font-weight: 500; border-left: 4px solid; transition: all 0.3s ease; }
+    .msg.success { background: #ecfdf5; color: #065f46; border-left-color: #10b981; font-size: 1.05em; position: relative; }
     .msg.error { background: #fef2f2; color: #991b1b; border-left-color: #ef4444; }
     .msg.info { background: #eff6ff; color: #1e40af; border-left-color: #3b82f6; }
     .msg.warning { background: #fffbeb; color: #92400e; border-left-color: #f59e0b; }
+    
+    /* 成功消息动画效果 */
+    .msg.success::before {
+      content: '🎉';
+      position: absolute;
+      right: 1em;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2em;
+      animation: celebration 2s ease-in-out;
+    }
+    
+    @keyframes celebration {
+      0%, 100% { transform: translateY(-50%) scale(1); }
+      25% { transform: translateY(-50%) scale(1.2) rotate(15deg); }
+      50% { transform: translateY(-50%) scale(1.1) rotate(-10deg); }
+      75% { transform: translateY(-50%) scale(1.15) rotate(5deg); }
+    }
     .page { display: none; }
     .page.active { display: block; }
     .button-group { display: flex; gap: 1em; margin-top: 1em; }
@@ -387,6 +483,15 @@
       .flow-arrow-right { transform: rotate(90deg); }
       .item-label { min-width: auto; margin-bottom: 0.2em; }
       .mechanism-item { flex-direction: column; align-items: flex-start; padding: 0.4em 0; }
+      
+      /* 移动端顶部通知适配 */
+      .top-notification {
+        min-width: 280px;
+        max-width: 90vw;
+        padding: 0.8em 1.5em;
+        font-size: 1em;
+        border-radius: 0 0 12px 12px;
+      }
     }
     .security-notice { 
       background: linear-gradient(135deg, #fef3c7 0%, #fef3c7 100%); 
@@ -542,9 +647,12 @@
       20%, 40%, 60%, 80% { transform: translateX(3px); }
     }
   </style>
-</head>
-<body>
-  <!-- 登录页面 -->
+  </head>
+  <body>
+    <!-- 顶部通知 -->
+    <div id="topNotification" class="top-notification"></div>
+    
+    <!-- 登录页面 -->
   <div id="loginPage" class="page active">
     <div class="login-container">
       <div class="login-card">
@@ -596,21 +704,6 @@
         
         <div class="admin-content">
           <div class="config-panel">
-            <div class="panel-title">⚙️ 应用版本管理</div>
-            
-            <div class="field">
-              <label for="versionInput">应用版本号</label>
-              <input type="number" id="versionInput" placeholder="例如：1" min="1" readonly disabled style="background: #f8fafc; color: #6b7280; cursor: not-allowed;">
-              <div id="versionValidation" class="url-validation" style="display: block;">
-                <span class="url-validation info">🤖 自动管理</span>
-              </div>
-              <small style="color: #6b7280; margin-top: 0.5em; display: block;">
-                版本号自动维护
-              </small>
-            </div>
-          </div>
-
-          <div class="config-panel">
             <div class="panel-title">🌐 页面重定向管理</div>
             
     <div class="field">
@@ -658,6 +751,28 @@
             </div>
           </div>
       
+          <div class="config-mechanism version-mechanism">
+            <div class="mechanism-header" onclick="toggleVersionMechanism()">
+              <h4>⚙️ 高级设置：版本管理</h4>
+              <span id="versionToggle" class="mechanism-toggle">▼</span>
+            </div>
+            <div id="versionContent" class="mechanism-content" style="display: none;">
+              <div style="background: #f1f5f9; padding: 0.8em; border-radius: 8px; margin-bottom: 1em; border-left: 3px solid #94a3b8; font-size: 0.9em; color: #64748b;">
+                <strong>💡 开发者信息：</strong> 此区域显示应用版本号管理详情，主要用于技术调试和配置追踪。
+              </div>
+              <div class="field">
+                <label for="versionInput">应用版本号</label>
+                <input type="number" id="versionInput" placeholder="例如：1" min="1" readonly disabled style="background: #f8fafc; color: #6b7280; cursor: not-allowed;">
+                <div id="versionValidation" class="url-validation" style="display: block;">
+                  <span class="url-validation info">🤖 自动管理</span>
+                </div>
+                <small style="color: #6b7280; margin-top: 0.5em; display: block;">
+                  系统自动维护版本号，配置变更时递增。普通用户无需关注此功能。
+                </small>
+              </div>
+            </div>
+          </div>
+
           <div class="config-preview">
             <h4>📋 配置概览</h4>
             <div class="config-summary">
@@ -784,6 +899,22 @@
     function toggleConfigMechanism() {
       const content = document.getElementById('mechanismContent');
       const toggle = document.getElementById('mechanismToggle');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.textContent = '▲';
+        toggle.classList.add('expanded');
+            } else {
+        content.style.display = 'none';
+        toggle.textContent = '▼';
+        toggle.classList.remove('expanded');
+      }
+    }
+
+    // 版本管理机制展开/折叠
+    function toggleVersionMechanism() {
+      const content = document.getElementById('versionContent');
+      const toggle = document.getElementById('versionToggle');
       
       if (content.style.display === 'none') {
         content.style.display = 'block';
@@ -1387,7 +1518,7 @@
         // 显示版本递增提示
         const validation = document.getElementById('versionValidation');
         validation.className = 'url-validation valid';
-        validation.innerHTML = `✅ 版本 ${oldVersion} → ${newVersion}`;
+        validation.innerHTML = `📝 版本 ${oldVersion} → ${newVersion}`;
         validation.style.display = 'block';
         
         // 更新配置预览
@@ -1434,7 +1565,22 @@
         }
         
         const data = await res.json();
-        showEditMsg('✨ 配置保存成功！数据已同步到APP应用', 'success');
+        showEditMsg('🎉 保存成功！配置已安全同步到您的APP应用', 'success');
+        
+        // 额外显示顶部通知
+        showTopNotification('🎊 太棒了！配置已成功保存并同步完成', 'success');
+        
+        // 给保存按钮添加成功反馈效果
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        saveBtn.style.transform = 'scale(1.05)';
+        saveBtn.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.4)';
+        
+        setTimeout(() => {
+          saveBtn.style.background = '';
+          saveBtn.style.transform = '';
+          saveBtn.style.boxShadow = '';
+        }, 2000);
         
         // 更新文件信息
         currentFileInfo = data.files[currentFileName];
@@ -1471,12 +1617,62 @@
       msgElement.className = `msg ${type}`;
       msgElement.style.display = 'block';
       
-      // 自动隐藏成功消息
+      // 成功消息特殊处理
       if (type === 'success') {
+        // 添加成功动画效果
+        msgElement.style.transform = 'scale(1.02)';
+        msgElement.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.25)';
+        msgElement.style.border = '2px solid #10b981';
+        
+        // 添加闪烁效果吸引注意
+        let flashCount = 0;
+        const flashInterval = setInterval(() => {
+          msgElement.style.backgroundColor = flashCount % 2 === 0 ? '#d1fae5' : '#ecfdf5';
+          flashCount++;
+          if (flashCount >= 6) {
+            clearInterval(flashInterval);
+            msgElement.style.backgroundColor = '#ecfdf5';
+          }
+        }, 300);
+        
+        // 延长显示时间到10秒
         setTimeout(() => {
+          msgElement.style.transform = 'scale(1)';
+          msgElement.style.boxShadow = 'none';
+          msgElement.style.border = 'none';
           msgElement.style.display = 'none';
-        }, 5000);
+        }, 10000);
+        
+        // 滚动到消息位置确保用户看到
+        setTimeout(() => {
+          msgElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+        }, 100);
       }
+    }
+
+    // 顶部通知显示函数
+    function showTopNotification(msg, type = 'success') {
+      const notification = document.getElementById('topNotification');
+      notification.textContent = msg;
+      notification.className = 'top-notification show';
+      
+      // 4秒后开始隐藏动画
+      setTimeout(() => {
+        notification.style.top = '-100px';
+        notification.style.transform = 'translateX(-50%) scale(0.8)';
+        notification.style.opacity = '0';
+        
+        // 动画完成后移除show类
+        setTimeout(() => {
+          notification.classList.remove('show');
+          notification.style.top = '';
+          notification.style.transform = '';
+          notification.style.opacity = '';
+        }, 500);
+      }, 4000);
     }
   </script>
 </body>
