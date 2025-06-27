@@ -1171,19 +1171,49 @@
         
         // 解析配置数据
         try {
-          // 清理JSON中的注释和控制字符
-          const cleanJsonText = removeJsonComments(jsonText);
+          // 首先尝试简单的注释清理
+          let simpleCleanJson = jsonText
+            .replace(/\/\/.*$/gm, '')  // 移除单行注释
+            .replace(/\/\*[\s\S]*?\*\//g, '')  // 移除多行注释
+            .replace(/^\uFEFF/, '')  // 移除BOM
+            .trim();
           
-          // 添加调试信息（开发模式下可见）
-          console.log('原始JSON内容:', jsonText);
-          console.log('清理后JSON内容:', cleanJsonText);
-          console.log('字符长度对比:', { 
-            original: jsonText.length, 
-            cleaned: cleanJsonText.length,
-            diff: jsonText.length - cleanJsonText.length 
-          });
+          console.log('尝试简单清理:', simpleCleanJson);
           
-          currentJson = JSON.parse(cleanJsonText);
+          try {
+            // 先尝试简单清理的结果
+            currentJson = JSON.parse(simpleCleanJson);
+            console.log('✅ 简单清理成功解析JSON');
+          } catch (simpleError) {
+            console.log('❌ 简单清理失败，尝试完整清理...');
+            
+            // 如果简单清理失败，使用完整的清理方法
+            const cleanJsonText = removeJsonComments(jsonText);
+            
+            // 添加调试信息（开发模式下可见）
+            console.log('原始JSON内容:', jsonText);
+            console.log('清理后JSON内容:', cleanJsonText);
+            console.log('字符长度对比:', { 
+              original: jsonText.length, 
+              cleaned: cleanJsonText.length,
+              diff: jsonText.length - cleanJsonText.length 
+            });
+            
+            // 调试：显示位置74附近的字符
+            const problemPos = 74;
+            const start = Math.max(0, problemPos - 10);
+            const end = Math.min(cleanJsonText.length, problemPos + 10);
+            console.log('位置74附近的字符:', {
+              substring: cleanJsonText.substring(start, end),
+              charCodes: Array.from(cleanJsonText.substring(start, end)).map((c, i) => ({
+                pos: start + i,
+                char: c,
+                code: c.charCodeAt(0)
+              }))
+            });
+            
+            currentJson = JSON.parse(cleanJsonText);
+          }
         } catch (e) {
           console.error('JSON解析失败详细信息:', {
             error: e.message,
