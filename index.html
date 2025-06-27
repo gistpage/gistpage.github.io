@@ -1046,7 +1046,7 @@
       document.getElementById('previewUrlText').style.color = '#1d4ed8';
     }
 
-    // 移除JSON中的注释和控制字符
+    // 移除JSON中的注释和有害控制字符
     function removeJsonComments(jsonString) {
       // 移除单行注释 //
       let cleanJson = jsonString.replace(/\/\/.*$/gm, '');
@@ -1054,21 +1054,14 @@
       // 移除多行注释 /* */
       cleanJson = cleanJson.replace(/\/\*[\s\S]*?\*\//g, '');
       
-      // 移除不可见的控制字符（保留空格、制表符、换行符）
-      cleanJson = cleanJson.replace(/[\u0000-\u001F\u007F-\u009F]/g, function(match) {
-        // 保留换行符、回车符、制表符
-        if (match === '\n' || match === '\r' || match === '\t') {
-          return match;
-        }
-        // 移除其他控制字符
-        return '';
-      });
-      
-      // 清理多余的空白行
-      cleanJson = cleanJson.replace(/^\s*[\r\n]/gm, '');
+      // 只移除真正有害的控制字符，保留所有可打印字符和基本空白字符
+      cleanJson = cleanJson.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u0080-\u009F]/g, '');
       
       // 修复可能的编码问题 - 移除BOM标记
       cleanJson = cleanJson.replace(/^\uFEFF/, '');
+      
+      // 清理多余的空白行
+      cleanJson = cleanJson.replace(/^\s*[\r\n]/gm, '');
       
       return cleanJson.trim();
     }
@@ -1165,6 +1158,11 @@
           // 添加调试信息（开发模式下可见）
           console.log('原始JSON内容:', jsonText);
           console.log('清理后JSON内容:', cleanJsonText);
+          console.log('字符长度对比:', { 
+            original: jsonText.length, 
+            cleaned: cleanJsonText.length,
+            diff: jsonText.length - cleanJsonText.length 
+          });
           
           currentJson = JSON.parse(cleanJsonText);
         } catch (e) {
