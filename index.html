@@ -1374,39 +1374,65 @@
         
         const data = await res.json();
         
-        // 找到第一个 JSON 文件
-        const fileEntry = Object.entries(data.files).find(([k, v]) => 
-          v.language === 'JSON' || k.toLowerCase().endsWith('.json')
-        );
-        
-        if (!fileEntry) {
-          showLoginMsg('未找到配置文件，请确保应用中包含有效的配置数据', 'error');
-          return;
+        // 遍历所有文件，找到第一个内容能被 JSON.parse 正确解析的文件
+        let found = false;
+        let fileName = null;
+        let fileInfo = null;
+        let jsonText = null;
+        let parsedJson = null;
+        for (const [k, v] of Object.entries(data.files)) {
+          try {
+            let content = v.content;
+            if (!content) {
+              // 没有 content 字段，尝试 fetch raw_url
+              const rawRes = await fetch(v.raw_url, {
+                method: 'GET',
+                headers: headers,
+                mode: 'cors'
+              });
+              if (!rawRes.ok) continue;
+              content = await rawRes.text();
+            }
+            // 尝试解析
+            let simpleCleanJson = content
+              .replace(/\/\/.*$/gm, '')  // 移除单行注释
+              .replace(/\/\*[\s\S]*?\*\//g, '')  // 移除多行注释
+              .replace(/^\uFEFF/, '')  // 移除BOM
+              .trim();
+            try {
+              parsedJson = JSON.parse(simpleCleanJson);
+              // 解析成功
+              fileName = k;
+              fileInfo = v;
+              jsonText = content;
+              found = true;
+              break;
+            } catch (simpleError) {
+              // 尝试完整清理
+              const cleanJsonText = removeJsonComments(content);
+              try {
+                parsedJson = JSON.parse(cleanJsonText);
+                fileName = k;
+                fileInfo = v;
+                jsonText = content;
+                found = true;
+                break;
+              } catch (e) {
+                // 解析失败，继续下一个文件
+                continue;
+              }
+            }
+          } catch (e) {
+            continue;
+          }
         }
         
-        const fileName = fileEntry[0];
-        const fileInfo = fileEntry[1];
+        if (!found) {
+          showLoginMsg('未找到有效的配置文件，请确保至少有一个文件内容为合法JSON', 'error');
+          return;
+        }
         
         showLoginMsg('正在加载应用配置数据...', 'info');
-        
-        // 获取文件内容
-        let jsonText;
-        if (fileInfo.content) {
-          jsonText = fileInfo.content;
-        } else {
-          const rawRes = await fetch(fileInfo.raw_url, {
-            method: 'GET',
-            headers: headers,
-            mode: 'cors'
-          });
-          
-        if (!rawRes.ok) {
-            showLoginMsg(`配置数据加载失败：${rawRes.status} ${rawRes.statusText}`, 'error');
-          return;
-          }
-          
-          jsonText = await rawRes.text();
-        }
         
         // 解析配置数据
         try {
@@ -1416,62 +1442,16 @@
             .replace(/\/\*[\s\S]*?\*\//g, '')  // 移除多行注释
             .replace(/^\uFEFF/, '')  // 移除BOM
             .trim();
-          
-          console.log('尝试简单清理:', simpleCleanJson);
-          
           try {
             // 先尝试简单清理的结果
             currentJson = JSON.parse(simpleCleanJson);
-            console.log('✅ 简单清理成功解析JSON');
           } catch (simpleError) {
-            console.log('❌ 简单清理失败，尝试完整清理...');
-            
             // 如果简单清理失败，使用完整的清理方法
             const cleanJsonText = removeJsonComments(jsonText);
-            
-            // 添加调试信息（开发模式下可见）
-            console.log('原始JSON内容:', jsonText);
-            console.log('清理后JSON内容:', cleanJsonText);
-            console.log('字符长度对比:', { 
-              original: jsonText.length, 
-              cleaned: cleanJsonText.length,
-              diff: jsonText.length - cleanJsonText.length 
-            });
-            
-            // 调试：显示位置74附近的字符
-            const problemPos = 74;
-            const start = Math.max(0, problemPos - 10);
-            const end = Math.min(cleanJsonText.length, problemPos + 10);
-            console.log('位置74附近的字符:', {
-              substring: cleanJsonText.substring(start, end),
-              charCodes: Array.from(cleanJsonText.substring(start, end)).map((c, i) => ({
-                pos: start + i,
-                char: c,
-                code: c.charCodeAt(0)
-              }))
-            });
-            
             currentJson = JSON.parse(cleanJsonText);
           }
         } catch (e) {
-          console.error('JSON解析失败详细信息:', {
-            error: e.message,
-            position: e.message.match(/position (\d+)/)?.[1],
-            originalLength: jsonText.length,
-            cleanedLength: removeJsonComments(jsonText).length
-          });
-          
-          // 尝试提供更友好的错误提示
-          let friendlyMessage = '配置数据格式错误';
-          if (e.message.includes('control character')) {
-            friendlyMessage = '配置数据包含不支持的特殊字符，请检查是否有隐藏字符或编码问题';
-          } else if (e.message.includes('Unexpected token')) {
-            friendlyMessage = '配置数据语法错误，请检查JSON格式是否正确';
-          } else if (e.message.includes('Unexpected end')) {
-            friendlyMessage = '配置数据不完整，请检查是否缺少闭合括号或引号';
-          }
-          
-          showLoginMsg(`${friendlyMessage}：${e.message}`, 'error');
+          showLoginMsg('配置数据格式错误：' + e.message, 'error');
           return;
         }
         
@@ -1480,8 +1460,6 @@
         currentToken = token;
         currentFileName = fileName;
         currentFileInfo = fileInfo;
-        
-        // 保存文件信息（用于后续操作）
         
         // 验证配置格式并初始化缺失字段
         if (!currentJson.hasOwnProperty('version')) {
