@@ -5,3 +5,6 @@ let currentGistId = null;
 let currentToken = null;
 let currentFileName = null;
 let currentFileInfo = null;
+let encryptionEnabled = false;
+let encryptionMethod = 'AES-GCM';
+let encryptionPassphrase = '';

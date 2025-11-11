@@ -78,3 +78,32 @@ input:focus {
   10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
   20%, 40%, 60%, 80% { transform: translateX(3px); }
 }
+
+/* 统一风格的模态弹窗 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.modal-card {
+  width: min(520px, 92vw);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+.modal-header { 
+  padding: 1em 1.2em; 
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+  border-bottom: 1px solid #e5e7eb; 
+}
+.modal-header h3 { margin: 0; color: #374151; font-size: 1.05em; font-weight: 600; }
+.modal-body { padding: 1em 1.2em; }
+.modal-desc { color: #6b7280; margin: 0 0 0.6em 0; font-size: 0.9em; }
+.modal-actions { display: flex; gap: 0.6em; padding: 0.8em 1.2em; background: #f8fafc; border-top: 1px solid #e5e7eb; }
+.modal-actions .admin-btn { min-width: 100px; }

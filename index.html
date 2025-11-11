@@ -36,6 +36,8 @@
           </div>
           
           <button onclick="connectToGist()" id="connectBtn" class="login-btn">连接到APP应用</button>
+          <button onclick="registerNewGist()" id="registerBtn" class="login-btn" style="margin-top:0.6em;background:linear-gradient(135deg,#10b981 0%, #059669 100%);">注册新APP应用</button>
+          <button onclick="openGistListModal()" id="listGistsBtn" class="login-btn" style="margin-top:0.6em;background:linear-gradient(135deg,#6366f1 0%, #7c3aed 100%);">查看我的Gists</button>
           
           <div id="loginMsg" class="msg info" style="display:none;"></div>
         </div>
@@ -109,7 +111,91 @@
             </small>
           </div>
         </div>
-    
+
+        <div class="config-panel" id="accessPanel">
+          <div class="panel-title">🛡️ 访问控制</div>
+          <div class="field">
+            <label for="allowedCountriesInput">允许国家（ISO 2位，逗号分隔）</label>
+            <div class="url-input-container">
+              <input id="allowedCountriesInput" placeholder="例如：BR, US" oninput="updateAllowedCountries()">
+              <button type="button" class="clear-url-btn" onclick="clearAllowedCountries()" title="清空">🧹</button>
+              <button type="button" class="test-url-btn" onclick="addCountryCode('BR')" title="添加巴西">🇧🇷</button>
+            </div>
+            <div id="accessValidation" class="url-validation" style="display: none;"></div>
+            <small style="color: #6b7280; margin-top: 0.5em; display: block;">
+              留空表示不限制。国家码使用 ISO 3166-1 Alpha-2（
+              <a href="https://zh.wikipedia.org/wiki/ISO_3166-1" target="_blank" rel="noopener" style="color:#1677ff;">中文说明</a>
+              或
+              <a href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2" target="_blank" rel="noopener" style="color:#1677ff;">英文国家码列表</a>
+              ）。
+            </small>
+
+            <div class="quick-urls" style="margin-top: 0.75em;">
+              <label style="font-size: 0.9em; color: #6b7280; margin-bottom: 0.6em; display: block; font-weight: 600;">⚡ 常用示例：</label>
+              <div class="url-buttons">
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('US')">🇺🇸 United States (US)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('CN')">🇨🇳 China (CN)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('JP')">🇯🇵 Japan (JP)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('DE')">🇩🇪 Germany (DE)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('GB')">🇬🇧 United Kingdom (GB)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('FR')">🇫🇷 France (FR)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('CA')">🇨🇦 Canada (CA)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('AU')">🇦🇺 Australia (AU)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('IN')">🇮🇳 India (IN)</button>
+                <button type="button" class="quick-url-btn" onclick="addCountryCode('BR')">🇧🇷 Brazil (BR)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-panel" id="extraPanel">
+          <div class="panel-title">🧩 扩展字段</div>
+          <div class="field">
+            <small style="color:#6b7280; display:block; margin-bottom:0.6em;">用于存放额外键值对，保存时写入配置的 <code>extra</code> 字段。</small>
+            <div id="extraList" class="kv-list"></div>
+            <div class="kv-actions" style="margin-top:0.6em;">
+              <button type="button" class="admin-btn btn-primary" onclick="addExtraField()">➕ 添加字段</button>
+            </div>
+            <div class="export-actions" style="margin-top:0.6em;">
+              <button type="button" class="admin-btn btn-secondary" onclick="generateAndCopyExtraJson()">📄 生成并复制 JSON</button>
+            </div>
+            <pre id="extraExportPreview" class="config-json" style="margin-top:0.6em;"></pre>
+            <div id="extraExportValidation" class="url-validation" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="config-panel" id="encryptionPanel">
+          <div class="panel-title">🔐 加密设置</div>
+          <div class="field">
+            <label class="switch-label">启用加密保存</label>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" id="encryptionEnabled" onchange="toggleEncryptionEnabled()">
+                <span class="slider"></span>
+              </label>
+              <span id="encryptionStatus" class="switch-status disabled">未启用</span>
+            </div>
+            <small style="color: #6b7280; margin-top: 0.5em; display: block;">启用后，配置将以加密形式写入 Gist，需口令解密。</small>
+          </div>
+
+          <div class="field" id="encryptionMethodField" style="display:none;">
+            <label for="encryptionMethod">加密方式</label>
+            <select id="encryptionMethod" onchange="updateEncryptionMethod()">
+              <option value="AES-GCM">AES-GCM（PBKDF2 口令派生）</option>
+            </select>
+          </div>
+
+          <div class="field" id="encryptionPassphraseField" style="display:none;">
+            <label for="encryptionPassphrase">加密口令 <span style="color: #ef4444;">*</span></label>
+            <div class="url-input-container">
+              <input type="password" id="encryptionPassphrase" placeholder="请输入用于加密的口令" oninput="updateEncryptionPassphrase()">
+              <button type="button" class="test-url-btn" onclick="togglePassphraseVisibility()" title="显示/隐藏">👁️</button>
+            </div>
+            <div id="encryptionValidation" class="url-validation" style="display: none;"></div>
+            <small style="color: #6b7280; margin-top: 0.5em; display: block;">口令不保存于Gist，请妥善保管。</small>
+          </div>
+        </div>
+
         <div class="config-mechanism version-mechanism">
           <div class="mechanism-header" onclick="toggleVersionMechanism()">
             <h4>⚙️ 高级设置：版本管理</h4>
@@ -146,6 +232,18 @@
             <div class="summary-item">
               <span class="summary-label">🎯 跳转目标：</span>
               <span id="previewUrlText" class="summary-value" style="color: #1d4ed8;">https://example.com</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">🛡️ 访问控制：</span>
+              <span id="previewAccessText" class="summary-value" style="color: #6b7280;">不限制</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">🔐 加密状态：</span>
+              <span id="previewEncryptionText" class="summary-value" style="color: #6b7280;">未启用</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">🧩 扩展字段：</span>
+              <span id="previewExtraText" class="summary-value" style="color: #6b7280;">无</span>
             </div>
           </div>
         </div>
@@ -228,7 +326,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="button-group">
           <button onclick="saveToGist()" id="saveBtn" class="admin-btn btn-success">💾 保存配置</button>
           <button onclick="backToLogin()" class="admin-btn btn-danger">🚪 退出APP应用</button>
@@ -244,9 +342,156 @@
   <script src="assets/js/core/utils.js"></script>
   <script src="assets/js/features/validation.js"></script>
   <script src="assets/js/features/config.js"></script>
+  <script src="assets/js/features/access.js"></script>
+  <script src="assets/js/features/encryption.js"></script>
+  <script src="assets/js/features/extra.js"></script>
   <script src="assets/js/ui/messages.js"></script>
   <script src="assets/js/ui/view.js"></script>
   <script src="assets/js/services/gist.js"></script>
   <script src="assets/js/app.js"></script>
+  
+  <!-- 自定义解密口令弹窗（与整体风格一致） -->
+  <div id="passphraseModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🔐 请输入解密口令</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">检测到配置已加密，请输入口令以继续加载管理界面。</p>
+        <div class="field">
+          <label for="passphraseModalInput">解密口令</label>
+          <input type="password" id="passphraseModalInput" placeholder="请输入用于解密的口令">
+        </div>
+        <div id="passphraseModalValidation" class="url-validation" style="display:none;"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn btn-secondary" onclick="cancelPassphraseModal()">取消</button>
+        <button type="button" class="admin-btn btn-primary" onclick="confirmPassphraseModal()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 统一风格的删除确认弹窗 -->
+  <div id="confirmModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⚠️ 确认删除</h3>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">确定要删除此扩展字段吗？该操作不可撤销。</p>
+        <div class="field">
+          <label>键</label>
+          <div id="confirmDeleteKey" class="key-preview"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn btn-secondary" onclick="confirmDeleteModalCancel()">取消</button>
+        <button type="button" class="admin-btn btn-danger" onclick="confirmDeleteModalOk()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 注册成功弹窗（统一风格） -->
+  <div id="registerSuccessModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🎉 注册成功</h3>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>APP ID</label>
+          <div id="registeredGistIdModal" class="key-preview" style="font-family: monospace;"></div>
+        </div>
+        <div class="field">
+          <label>配置名称</label>
+          <div id="registeredConfigNameModal" class="key-preview"></div>
+        </div>
+        <div class="field">
+          <label>访问令牌</label>
+          <div id="registeredTokenModal" class="key-preview" style="font-family: monospace;"></div>
+          <small style="color:#6b7280; display:block; margin-top:0.4em;">令牌仅作脱敏展示，复制操作将使用输入框中的完整令牌。</small>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn btn-primary" onclick="fillRegisteredInfoFromModal()">🪄 一键填入登录</button>
+        <button type="button" class="admin-btn btn-secondary" onclick="copyRegisteredInfoFromModal()">📋 复制信息</button>
+        <button type="button" class="admin-btn btn-danger" onclick="registerSuccessModalClose()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 访问令牌输入弹窗（统一风格 + 获取指引） -->
+  <div id="tokenModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:720px;">
+      <div class="modal-header">
+        <h3>🔑 输入访问令牌</h3>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="tokenModalInput">GitHub 访问令牌（仅需 gist 权限）</label>
+          <input id="tokenModalInput" type="password" placeholder="粘贴您的令牌，例如：ghp_..." autocomplete="off">
+        </div>
+        <div id="tokenModalValidation" class="url-validation" style="display:none;"></div>
+        <div class="field" style="margin-top:0.6em;">
+          <label>如何获取令牌</label>
+          <div class="key-preview" style="font-size:0.92em; line-height:1.6;">
+            1) 登录 GitHub → Settings → Developer settings → Personal access tokens<br>
+            2) 选择 Classic 或 Fine-grained（推荐设置过期时间）<br>
+            3) 勾选权限：<strong>gist</strong><br>
+            4) 生成令牌并复制，务必妥善保管（不可泄露）
+          </div>
+          <div style="margin-top:0.4em;">
+            <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" class="summary-value" style="color:#1677ff;">👉 打开令牌管理页面</a>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn btn-secondary" onclick="cancelTokenModal()">取消</button>
+        <button type="button" class="admin-btn btn-primary" onclick="confirmTokenModal()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 配置名称输入弹窗（用于注册新APP应用） -->
+  <div id="configNameModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:640px;">
+      <div class="modal-header">
+        <h3>📝 配置名称</h3>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="configNameModalInput">请输入配置名称（将作为 Gist 描述）</label>
+          <input id="configNameModalInput" placeholder="例如：我的应用配置">
+        </div>
+        <div id="configNameModalValidation" class="url-validation" style="display:none;"></div>
+        <small style="color:#6b7280; display:block; margin-top:0.4em;">默认值：App Config (created by App-Config-Manager)。你可以自定义更易识别的名称。</small>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn btn-secondary" onclick="cancelConfigNameModal()">取消</button>
+        <button type="button" class="admin-btn btn-primary" onclick="confirmConfigNameModal()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的Gists弹窗（统一风格） -->
+  <div id="gistListModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3>📚 我的 Gists</h3>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="gistSearchInput">搜索</label>
+          <input id="gistSearchInput" placeholder="按描述或ID过滤" oninput="filterGistList()">
+        </div>
+        <div id="gistListContainer" class="gist-list"></div>
+        <div id="gistListValidation" class="url-validation" style="display:none;"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="admin-btn btn-secondary" onclick="loadMoreGists()">加载更多</button>
+        <button type="button" class="admin-btn btn-danger" onclick="closeGistListModal()">关闭</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
