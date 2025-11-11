@@ -1,0 +1,80 @@
+/* 登录页面动画效果 */
+.login-card { 
+  animation: slideUp 0.8s ease-out; 
+}
+@keyframes slideUp { 
+  from { opacity: 0; transform: translateY(30px) scale(0.98); } 
+  to { opacity: 1; transform: translateY(0) scale(1); } 
+}
+
+/* 输入框浮动标签效果 */
+.field {
+  position: relative;
+}
+.field label {
+  transition: all 0.3s ease;
+}
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label {
+  transform: translateY(-0.5em);
+  font-size: 0.85em;
+  color: #667eea;
+}
+
+/* 增强的聚焦效果 */
+input:focus {
+  animation: focusGlow 0.4s ease;
+}
+@keyframes focusGlow {
+  0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.1); }
+  50% { box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.15); }
+  100% { box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
+}
+
+/* 页面过渡动画 */
+.page { transition: opacity 0.3s ease-in-out; }
+.page:not(.active) { opacity: 0; }
+.page.active { opacity: 1; }
+
+/* 按钮状态动画 */
+.login-btn.success { 
+  animation: pulse 0.3s ease-in-out; 
+}
+@keyframes pulse { 
+  0% { transform: scale(1); } 
+  50% { transform: scale(1.02); } 
+  100% { transform: scale(1); } 
+}
+
+/* 加载状态动画 */
+.login-btn.loading {
+  position: relative;
+  color: transparent;
+}
+.login-btn.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 错误状态抖动动画 */
+.login-btn.error {
+  animation: shake 0.5s ease-in-out;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}

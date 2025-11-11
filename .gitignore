@@ -1,0 +1,52 @@
+# gistpage 项目通用忽略配置
+#
+# 说明：
+# - 忽略本地 OS/IDE 生成的临时文件
+# - 忽略常见前端构建输出与缓存
+# - 保留示例环境文件（.env.example）
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+Icon?
+
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Node 包与缓存
+node_modules/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# 构建输出
+dist/
+build/
+out/
+
+# 覆盖率
+coverage/
+
+# 临时目录
+tmp/
+temp/
+
+# 环境变量文件
+.env
+.env.*
+!.env.example

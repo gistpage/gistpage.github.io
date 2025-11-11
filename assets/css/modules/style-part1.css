@@ -1,0 +1,256 @@
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+  margin: 0; 
+  padding: 0; 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%); 
+  min-height: 100vh; 
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 顶部通知样式 */
+.top-notification {
+  position: fixed;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 1em 2em;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+  font-weight: 600;
+  font-size: 1.1em;
+  z-index: 10000;
+  min-width: 300px;
+  text-align: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.top-notification.show {
+  top: 0;
+  animation: slideDownPulse 0.6s ease-out;
+}
+
+.top-notification::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes slideDownPulse {
+  0% { 
+    top: -100px; 
+    transform: translateX(-50%) scale(0.8); 
+    opacity: 0; 
+  }
+  50% { 
+    top: 10px; 
+    transform: translateX(-50%) scale(1.05); 
+    opacity: 1; 
+  }
+  100% { 
+    top: 0; 
+    transform: translateX(-50%) scale(1); 
+    opacity: 1; 
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 登录页面隐藏滚动条，管理页面允许滚动 */
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+/* 登录页面隐藏滚动条 */
+#loginPage::-webkit-scrollbar {
+  display: none;
+}
+#loginPage {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow: hidden;
+}
+
+/* 管理页面允许滚动 */
+#editPage {
+  overflow: visible;
+  height: auto;
+  min-height: 100vh;
+}
+
+/* 管理页面的美化滚动条 */
+#editPage .admin-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+}
+#editPage .admin-content::-webkit-scrollbar {
+  width: 6px;
+}
+#editPage .admin-content::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+#editPage .admin-content::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 3px;
+  min-height: 20px;
+}
+#editPage .admin-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+#editPage .admin-content::-webkit-scrollbar-corner {
+  background: transparent;
+}
+body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+body::after {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
+  animation: backgroundMove 15s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes backgroundMove {
+  0%, 100% { transform: translateX(-100%) translateY(-100%) rotate(0deg); }
+  50% { transform: translateX(0%) translateY(0%) rotate(180deg); }
+}
+.login-container { 
+  max-width: 420px; 
+  margin: 0 auto; 
+  padding: 1.2em; 
+  height: 100vh; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center; 
+  overflow: hidden; 
+  box-sizing: border-box;
+}
+.admin-container { 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  background: #f8fafc; 
+  min-height: 100vh; 
+  display: flex; 
+  flex-direction: column; 
+  padding-bottom: 0;
+  height: auto;
+}
+.login-card { 
+  background: rgba(255, 255, 255, 0.95); 
+  backdrop-filter: blur(15px);
+  border-radius: 16px; 
+  box-shadow: 0 30px 60px rgba(0,0,0,0.12), 0 10px 20px rgba(0,0,0,0.08); 
+  padding: 1.8em 2em; 
+  text-align: center; 
+  max-height: 95vh; 
+  border: 1px solid rgba(255,255,255,0.3);
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.admin-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 1em 2em; flex-shrink: 0; }
+.admin-content { padding: 1em 2em 1.5em 2em; flex: 1; overflow-y: auto; scroll-behavior: smooth; max-height: calc(100vh - 80px); }
+.field { margin-bottom: 0.8em; }
+.field:last-of-type { margin-bottom: 1em; }
+label { 
+  display: block; 
+  margin-bottom: 0.5em; 
+  font-weight: 600; 
+  color: #374151; 
+  font-size: 0.9em; 
+  text-align: left;
+}
+input { 
+  width: 100%; 
+  padding: 0.7em 1em; 
+  font-size: 1em; 
+  border-radius: 10px; 
+  border: 2px solid #e5e7eb; 
+  box-sizing: border-box; 
+  transition: all 0.3s ease; 
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(5px);
+}
+input:focus { 
+  outline: none; 
+  border-color: #667eea; 
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); 
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+input::placeholder {
+  color: #9ca3af;
+  font-size: 0.95em;
+}
+.login-btn { 
+  width: 100%; 
+  padding: 0.9em 1.2em; 
+  font-size: 1.05em; 
+  border-radius: 10px; 
+  border: none; 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+  color: #fff; 
+  cursor: pointer; 
+  font-weight: 600; 
+  transition: all 0.3s ease;
+  margin-top: 0.3em;
+  position: relative;
+  overflow: hidden;
+}
+.login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+.login-btn:hover::before {
+  left: 100%;
+}
+.login-btn:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+}
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+.login-btn:disabled { 
+  background: #9ca3af; 
+  cursor: not-allowed; 
+  transform: none; 
+  box-shadow: none; 
+}
+.login-btn:disabled::before {
+  display: none;
+}
