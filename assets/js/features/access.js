@@ -35,6 +35,12 @@ function loadAccessConfig() {
   updateTimezoneCheckStatus();
   updateIpCheckStatus();
   updateAccessPreview();
+  const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
+  if (v && anyEnabled && allowed.length === 0) {
+    v.className = 'url-validation invalid';
+    v.innerHTML = '❌ 已启用判断项，需先填写允许国家';
+    v.style.display = 'block';
+  }
 }
 
 function updateAccessPreview() {
@@ -64,7 +70,12 @@ function updateAllowedCountries() {
   } else {
     const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
     const needAnyCheck = valid.length > 0 && !anyEnabled;
-    if (needAnyCheck) {
+    const needCountries = anyEnabled && valid.length === 0;
+    if (needCountries) {
+      v.className = 'url-validation invalid';
+      v.innerHTML = '❌ 已启用判断项，需先填写允许国家';
+      v.style.display = 'block';
+    } else if (needAnyCheck) {
       v.className = 'url-validation invalid';
       v.innerHTML = '❌ 已填写允许国家，需至少启用一个判断项';
       v.style.display = 'block';
@@ -109,9 +120,16 @@ function clearAllowedCountries() {
   const input = document.getElementById('allowedCountriesInput');
   if (input) input.value = '';
   const v = document.getElementById('accessValidation');
-  v.className = 'url-validation info';
-  v.innerHTML = '🔄 已清空访问限制';
-  v.style.display = 'block';
+  const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
+  if (anyEnabled) {
+    v.className = 'url-validation invalid';
+    v.innerHTML = '❌ 已启用判断项，需先填写允许国家';
+    v.style.display = 'block';
+  } else {
+    v.className = 'url-validation info';
+    v.innerHTML = '🔄 已清空访问限制';
+    v.style.display = 'block';
+  }
   updateAccessPreview();
   if (typeof resetVersionValidation === 'function') {
     resetVersionValidation();
@@ -144,10 +162,22 @@ function updateIpCheckStatus() {
 
 function toggleCountryCheckEnabled() {
   const enabled = document.getElementById('countryCheckEnabled').checked;
+  const allowed = Array.isArray(currentJson.allowCountries) ? currentJson.allowCountries : [];
+  if (enabled && allowed.length === 0) {
+    const v = document.getElementById('accessValidation');
+    if (v) {
+      v.className = 'url-validation invalid';
+      v.innerHTML = '❌ 启用判断前需先填写允许国家';
+      v.style.display = 'block';
+    }
+    document.getElementById('countryCheckEnabled').checked = false;
+    currentJson.isCountryCheckEnabled = false;
+    updateCountryCheckStatus();
+    return;
+  }
   currentJson.isCountryCheckEnabled = !!enabled;
   updateCountryCheckStatus();
   const v = document.getElementById('accessValidation');
-  const allowed = Array.isArray(currentJson.allowCountries) ? currentJson.allowCountries : [];
   const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
   const needAnyCheck = allowed.length > 0 && !anyEnabled;
   if (needAnyCheck) {
@@ -161,10 +191,22 @@ function toggleCountryCheckEnabled() {
 
 function toggleTimezoneCheckEnabled() {
   const enabled = document.getElementById('timezoneCheckEnabled').checked;
+  const allowed = Array.isArray(currentJson.allowCountries) ? currentJson.allowCountries : [];
+  if (enabled && allowed.length === 0) {
+    const v = document.getElementById('accessValidation');
+    if (v) {
+      v.className = 'url-validation invalid';
+      v.innerHTML = '❌ 启用判断前需先填写允许国家';
+      v.style.display = 'block';
+    }
+    document.getElementById('timezoneCheckEnabled').checked = false;
+    currentJson.isTimezoneCheckEnabled = false;
+    updateTimezoneCheckStatus();
+    return;
+  }
   currentJson.isTimezoneCheckEnabled = !!enabled;
   updateTimezoneCheckStatus();
   const v = document.getElementById('accessValidation');
-  const allowed = Array.isArray(currentJson.allowCountries) ? currentJson.allowCountries : [];
   const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
   const needAnyCheck = allowed.length > 0 && !anyEnabled;
   if (needAnyCheck) {
@@ -178,10 +220,22 @@ function toggleTimezoneCheckEnabled() {
 
 function toggleIpCheckEnabled() {
   const enabled = document.getElementById('ipCheckEnabled').checked;
+  const allowed = Array.isArray(currentJson.allowCountries) ? currentJson.allowCountries : [];
+  if (enabled && allowed.length === 0) {
+    const v = document.getElementById('accessValidation');
+    if (v) {
+      v.className = 'url-validation invalid';
+      v.innerHTML = '❌ 启用判断前需先填写允许国家';
+      v.style.display = 'block';
+    }
+    document.getElementById('ipCheckEnabled').checked = false;
+    currentJson.isIpAttributionCheckEnabled = false;
+    updateIpCheckStatus();
+    return;
+  }
   currentJson.isIpAttributionCheckEnabled = !!enabled;
   updateIpCheckStatus();
   const v = document.getElementById('accessValidation');
-  const allowed = Array.isArray(currentJson.allowCountries) ? currentJson.allowCountries : [];
   const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
   const needAnyCheck = allowed.length > 0 && !anyEnabled;
   if (needAnyCheck) {

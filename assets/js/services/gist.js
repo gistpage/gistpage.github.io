@@ -605,6 +605,12 @@ async function saveToGist() {
     if (cSwitch) cSwitch.focus();
     return;
   }
+  if (anyEnabled && countries.length === 0) {
+    showEditMsg('❌ 启用了判断项但未填写允许国家，请完善后再保存', 'error');
+    const cInput = document.getElementById('allowedCountriesInput');
+    if (cInput) cInput.focus();
+    return;
+  }
   const switchChanged = originalConfig && currentJson.isRedirectEnabled !== originalConfig.isRedirectEnabled;
   const urlChangedWhenEnabled = originalConfig && currentJson.isRedirectEnabled === true && currentJson.redirectUrl !== originalConfig.redirectUrl;
   const shouldIncrementVersion = switchChanged || urlChangedWhenEnabled;
