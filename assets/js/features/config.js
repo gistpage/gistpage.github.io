@@ -15,11 +15,7 @@ function loadRedirectConfig() {
   const urlConfigField = document.getElementById('urlConfigField');
   urlConfigField.style.display = isEnabled ? 'block' : 'none';
   const accessPanel = document.getElementById('accessPanel');
-  const encryptionPanel = document.getElementById('encryptionPanel');
-  const extraPanel = document.getElementById('extraPanel');
   if (accessPanel) accessPanel.style.display = isEnabled ? 'block' : 'none';
-  if (encryptionPanel) encryptionPanel.style.display = isEnabled ? 'block' : 'none';
-  if (extraPanel) extraPanel.style.display = isEnabled ? 'block' : 'none';
   const versionValidation = document.getElementById('versionValidation');
   const urlValidation = document.getElementById('urlValidation');
   versionValidation.style.display = 'none';
@@ -45,24 +41,7 @@ function updateRedirectEnabled() {
     }
   }
   const accessPanel = document.getElementById('accessPanel');
-  const encryptionPanel = document.getElementById('encryptionPanel');
-  const extraPanel = document.getElementById('extraPanel');
   if (accessPanel) accessPanel.style.display = isEnabled ? 'block' : 'none';
-  if (encryptionPanel) encryptionPanel.style.display = isEnabled ? 'block' : 'none';
-  if (extraPanel) extraPanel.style.display = isEnabled ? 'block' : 'none';
-  // 当关闭重定向时，禁用加密设置并重置其展示区域
-  if (!isEnabled) {
-    if (typeof updateEncryptionStatus === 'function') {
-      encryptionEnabled = false;
-      const encSwitch = document.getElementById('encryptionEnabled');
-      if (encSwitch) encSwitch.checked = false;
-      updateEncryptionStatus();
-    }
-    const methodField = document.getElementById('encryptionMethodField');
-    const passField = document.getElementById('encryptionPassphraseField');
-    if (methodField) methodField.style.display = 'none';
-    if (passField) passField.style.display = 'none';
-  }
   updateRedirectStatus();
   updateConfigPreview();
   resetVersionValidation();
@@ -155,6 +134,24 @@ function updateConfigPreview() {
       accessEl.textContent = `只允许：${allowed.join(', ')}`;
       accessEl.style.color = '#0ea5e9';
     }
+  }
+  const countryEl = document.getElementById('previewCountryCheckText');
+  if (countryEl) {
+    const enabled = !!currentJson.isCountryCheckEnabled;
+    countryEl.textContent = enabled ? '已启用' : '未启用';
+    countryEl.style.color = enabled ? '#10b981' : '#6b7280';
+  }
+  const tzEl = document.getElementById('previewTimezoneCheckText');
+  if (tzEl) {
+    const enabled = !!currentJson.isTimezoneCheckEnabled;
+    tzEl.textContent = enabled ? '已启用' : '未启用';
+    tzEl.style.color = enabled ? '#10b981' : '#6b7280';
+  }
+  const ipEl = document.getElementById('previewIpCheckText');
+  if (ipEl) {
+    const enabled = !!currentJson.isIpAttributionCheckEnabled;
+    ipEl.textContent = enabled ? '已启用' : '未启用';
+    ipEl.style.color = enabled ? '#10b981' : '#6b7280';
   }
   const extraEl = document.getElementById('previewExtraText');
   if (extraEl) {

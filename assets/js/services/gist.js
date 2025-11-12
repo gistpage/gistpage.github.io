@@ -152,6 +152,15 @@ async function connectToGist() {
         currentJson.allowCountries = [];
       }
     }
+    if (!currentJson.hasOwnProperty('isCountryCheckEnabled')) {
+      currentJson.isCountryCheckEnabled = false;
+    }
+    if (!currentJson.hasOwnProperty('isTimezoneCheckEnabled')) {
+      currentJson.isTimezoneCheckEnabled = false;
+    }
+    if (!currentJson.hasOwnProperty('isIpAttributionCheckEnabled')) {
+      currentJson.isIpAttributionCheckEnabled = false;
+    }
     if (!currentJson.hasOwnProperty('extra') || typeof currentJson.extra !== 'object' || currentJson.extra === null) {
       currentJson.extra = {};
     }
@@ -212,6 +221,9 @@ async function registerNewGist() {
       isRedirectEnabled: false,
       redirectUrl: 'https://example.com',
       allowCountries: [],
+      isCountryCheckEnabled: false,
+      isTimezoneCheckEnabled: false,
+      isIpAttributionCheckEnabled: false,
       extra: {}
     };
     const requestBody = {
@@ -584,6 +596,14 @@ async function saveToGist() {
     if (!currentJson.redirectUrl || currentJson.redirectUrl.trim() === '') {
       currentJson.redirectUrl = 'https://example.com';
     }
+  }
+  const countries = Array.isArray(currentJson.allowCountries) ? currentJson.allowCountries : [];
+  const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
+  if (countries.length > 0 && !anyEnabled) {
+    showEditMsg('❌ 已填写允许国家，需至少启用一个判断项', 'error');
+    const cSwitch = document.getElementById('countryCheckEnabled');
+    if (cSwitch) cSwitch.focus();
+    return;
   }
   const switchChanged = originalConfig && currentJson.isRedirectEnabled !== originalConfig.isRedirectEnabled;
   const urlChangedWhenEnabled = originalConfig && currentJson.isRedirectEnabled === true && currentJson.redirectUrl !== originalConfig.redirectUrl;

@@ -112,7 +112,7 @@
           </div>
         </div>
 
-        <div class="config-panel" id="accessPanel">
+          <div class="config-panel" id="accessPanel">
           <div class="panel-title">🛡️ 访问控制</div>
           <div class="field">
             <label for="allowedCountriesInput">允许国家（ISO 2位，逗号分隔）</label>
@@ -145,6 +145,37 @@
                 <button type="button" class="quick-url-btn" onclick="addCountryCode('BR')">🇧🇷 Brazil (BR)</button>
               </div>
             </div>
+          </div>
+          <div class="field" style="margin-top: 1em;">
+            <label class="switch-label">启用设备国家码判断</label>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" id="countryCheckEnabled" onchange="toggleCountryCheckEnabled()">
+                <span class="slider"></span>
+              </label>
+              <span id="countryCheckStatus" class="switch-status disabled">未启用</span>
+            </div>
+          </div>
+          <div class="field">
+            <label class="switch-label">启用设备时区判断</label>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" id="timezoneCheckEnabled" onchange="toggleTimezoneCheckEnabled()">
+                <span class="slider"></span>
+              </label>
+              <span id="timezoneCheckStatus" class="switch-status disabled">未启用</span>
+            </div>
+          </div>
+          <div class="field">
+            <label class="switch-label">启用设备公网IP归属判断</label>
+            <div class="switch-container">
+              <label class="switch">
+                <input type="checkbox" id="ipCheckEnabled" onchange="toggleIpCheckEnabled()">
+                <span class="slider"></span>
+              </label>
+              <span id="ipCheckStatus" class="switch-status disabled">未启用</span>
+            </div>
+          </div>
           </div>
         </div>
 
@@ -222,10 +253,6 @@
           <h4>📋 配置概览</h4>
           <div class="config-summary">
             <div class="summary-item">
-              <span class="summary-label">📦 应用版本：</span>
-              <span id="previewVersionText" class="summary-value" style="color: #9333ea;">第 1 版</span>
-            </div>
-            <div class="summary-item">
               <span class="summary-label">🔄 重定向功能：</span>
               <span id="previewEnabledText" class="summary-value" style="color: #ef4444;">已关闭</span>
             </div>
@@ -238,12 +265,28 @@
               <span id="previewAccessText" class="summary-value" style="color: #6b7280;">不限制</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">🔐 加密状态：</span>
-              <span id="previewEncryptionText" class="summary-value" style="color: #6b7280;">未启用</span>
+              <span class="summary-label">🇨🇺 国家码判断：</span>
+              <span id="previewCountryCheckText" class="summary-value" style="color: #6b7280;">未启用</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">🕰️ 时区判断：</span>
+              <span id="previewTimezoneCheckText" class="summary-value" style="color: #6b7280;">未启用</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">🌍 公网IP归属判断：</span>
+              <span id="previewIpCheckText" class="summary-value" style="color: #6b7280;">未启用</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">🧩 扩展字段：</span>
               <span id="previewExtraText" class="summary-value" style="color: #6b7280;">无</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">🔐 加密状态：</span>
+              <span id="previewEncryptionText" class="summary-value" style="color: #6b7280;">未启用</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">📦 应用版本：</span>
+              <span id="previewVersionText" class="summary-value" style="color: #9333ea;">第 1 版</span>
             </div>
           </div>
         </div>
