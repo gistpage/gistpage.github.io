@@ -175,8 +175,10 @@ async function connectToGist() {
       loadExtraConfig();
     }
     originalConfig = JSON.parse(JSON.stringify(currentJson));
-    const displayAppId = gistId.length > 8 ? gistId.substring(0, 8) + '...' : gistId;
-    document.getElementById('currentAppId').textContent = displayAppId;
+    // 完整显示 APP ID
+    document.getElementById('currentAppId').textContent = gistId;
+    // 显示文件名
+    document.getElementById('currentFileName').textContent = fileName || '-';
     showPage('editPage');
     showTopNotification('🎉 APP应用连接成功，配置数据已加载！', 'success');
     // 会话持久化：在当前浏览器会话中记住凭据，刷新后自动恢复

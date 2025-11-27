@@ -60,6 +60,7 @@ function backToLogin() {
     }
   } catch (e) {}
   document.getElementById('currentAppId').textContent = '-';
+  document.getElementById('currentFileName').textContent = '-';
   showPage('loginPage');
   showLoginMsg('请输入应用凭据以访问配置管理控制台', 'info');
 }

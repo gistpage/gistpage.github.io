@@ -119,18 +119,41 @@ function clearAllowedCountries() {
   currentJson.allowCountries = [];
   const input = document.getElementById('allowedCountriesInput');
   if (input) input.value = '';
-  const v = document.getElementById('accessValidation');
+  
+  // 自动关闭三个判断开关
   const anyEnabled = !!(currentJson.isCountryCheckEnabled || currentJson.isTimezoneCheckEnabled || currentJson.isIpAttributionCheckEnabled);
   if (anyEnabled) {
-    v.className = 'url-validation invalid';
-    v.innerHTML = '❌ 已启用判断项，需先填写允许国家';
-    v.style.display = 'block';
-  } else {
-    v.className = 'url-validation info';
-    v.innerHTML = '🔄 已清空访问限制';
-    v.style.display = 'block';
+    // 关闭国家码判断
+    currentJson.isCountryCheckEnabled = false;
+    const countrySwitch = document.getElementById('countryCheckEnabled');
+    if (countrySwitch) countrySwitch.checked = false;
+    updateCountryCheckStatus();
+    
+    // 关闭时区判断
+    currentJson.isTimezoneCheckEnabled = false;
+    const timezoneSwitch = document.getElementById('timezoneCheckEnabled');
+    if (timezoneSwitch) timezoneSwitch.checked = false;
+    updateTimezoneCheckStatus();
+    
+    // 关闭IP归属判断
+    currentJson.isIpAttributionCheckEnabled = false;
+    const ipSwitch = document.getElementById('ipCheckEnabled');
+    if (ipSwitch) ipSwitch.checked = false;
+    updateIpCheckStatus();
   }
+  
+  const v = document.getElementById('accessValidation');
+  v.className = 'url-validation info';
+  v.innerHTML = '🔄 已清空访问限制';
+  v.style.display = 'block';
+  
   updateAccessPreview();
+  
+  // 更新配置预览（包括三个判断开关的状态）
+  if (typeof updateConfigPreview === 'function') {
+    updateConfigPreview();
+  }
+  
   if (typeof resetVersionValidation === 'function') {
     resetVersionValidation();
   }
