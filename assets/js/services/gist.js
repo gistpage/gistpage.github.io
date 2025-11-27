@@ -177,8 +177,9 @@ async function connectToGist() {
     originalConfig = JSON.parse(JSON.stringify(currentJson));
     // 完整显示 APP ID
     document.getElementById('currentAppId').textContent = gistId;
-    // 显示文件名
-    document.getElementById('currentFileName').textContent = fileName || '-';
+    // 显示 Gist 描述（配置名称）
+    const gistDescription = data.description || '未命名配置';
+    document.getElementById('currentGistDesc').textContent = gistDescription;
     showPage('editPage');
     showTopNotification('🎉 APP应用连接成功，配置数据已加载！', 'success');
     // 会话持久化：在当前浏览器会话中记住凭据，刷新后自动恢复
